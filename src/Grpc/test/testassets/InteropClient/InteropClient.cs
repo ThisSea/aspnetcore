@@ -100,6 +100,7 @@ namespace InteropTestsClient
                 {
 #pragma warning disable CS0618 // Type or member is obsolete
                     loggerOptions.IncludeScopes = true;
+                    loggerOptions.DisableColors = true;
 #pragma warning restore CS0618 // Type or member is obsolete
                 });
             });
@@ -178,8 +179,6 @@ namespace InteropTestsClient
 
             return new GrpcChannelWrapper(channel);
         }
-
-        private bool IsHttpClient() => string.Equals(options.ClientType, "httpclient", StringComparison.OrdinalIgnoreCase);
 
         private async Task<ChannelCredentials> CreateCredentialsAsync(bool? useTestCaOverride = null)
         {
@@ -861,7 +860,7 @@ namespace InteropTestsClient
             string keyFile = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS")!;
             Assert.IsNotNull(keyFile);
             var jobject = JObject.Parse(File.ReadAllText(keyFile));
-            string email = jobject.GetValue("client_email").Value<string>();
+            string email = jobject.GetValue("client_email")!.Value<string>()!;
             Assert.IsTrue(email.Length > 0);  // spec requires nonempty client email.
             return email;
         }

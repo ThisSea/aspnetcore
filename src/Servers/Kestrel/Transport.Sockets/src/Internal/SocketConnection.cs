@@ -5,7 +5,6 @@ using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.IO.Pipelines;
-using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -19,7 +18,6 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.Internal
     {
         private static readonly int MinAllocBufferSize = SlabMemoryPool.BlockSize / 2;
         private static readonly bool IsWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-        private static readonly bool IsMacOS = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
 
         private readonly Socket _socket;
         private readonly ISocketsTrace _trace;
@@ -37,11 +35,12 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.Internal
 
         internal SocketConnection(Socket socket,
                                   MemoryPool<byte> memoryPool,
-                                  PipeScheduler scheduler,
+                                  PipeScheduler transportScheduler,
                                   ISocketsTrace trace,
                                   long? maxReadBufferSize = null,
                                   long? maxWriteBufferSize = null,
-                                  bool waitForData = true)
+                                  bool waitForData = true,
+                                  bool useInlineSchedulers = false)
         {
             Debug.Assert(socket != null);
             Debug.Assert(memoryPool != null);
@@ -60,7 +59,15 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.Internal
             // On *nix platforms, Sockets already dispatches to the ThreadPool.
             // Yes, the IOQueues are still used for the PipeSchedulers. This is intentional.
             // https://github.com/aspnet/KestrelHttpServer/issues/2573
-            var awaiterScheduler = IsWindows ? scheduler : PipeScheduler.Inline;
+            var awaiterScheduler = IsWindows ? transportScheduler : PipeScheduler.Inline;
+
+            var applicationScheduler = PipeScheduler.ThreadPool;
+            if (useInlineSchedulers)
+            {
+                transportScheduler = PipeScheduler.Inline;
+                awaiterScheduler = PipeScheduler.Inline;
+                applicationScheduler = PipeScheduler.Inline;
+            }
 
             _receiver = new SocketReceiver(_socket, awaiterScheduler);
             _sender = new SocketSender(_socket, awaiterScheduler);
@@ -68,8 +75,8 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.Internal
             maxReadBufferSize ??= 0;
             maxWriteBufferSize ??= 0;
 
-            var inputOptions = new PipeOptions(MemoryPool, PipeScheduler.ThreadPool, scheduler, maxReadBufferSize.Value, maxReadBufferSize.Value / 2, useSynchronizationContext: false);
-            var outputOptions = new PipeOptions(MemoryPool, scheduler, PipeScheduler.ThreadPool, maxWriteBufferSize.Value, maxWriteBufferSize.Value / 2, useSynchronizationContext: false);
+            var inputOptions = new PipeOptions(MemoryPool, applicationScheduler, transportScheduler, maxReadBufferSize.Value, maxReadBufferSize.Value / 2, useSynchronizationContext: false);
+            var outputOptions = new PipeOptions(MemoryPool, transportScheduler, applicationScheduler, maxWriteBufferSize.Value, maxWriteBufferSize.Value / 2, useSynchronizationContext: false);
 
             var pair = DuplexPipe.CreateConnectionPair(inputOptions, outputOptions);
 
@@ -372,12 +379,9 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.Internal
 
         private static bool IsConnectionResetError(SocketError errorCode)
         {
-            // A connection reset can be reported as SocketError.ConnectionAborted on Windows.
-            // ProtocolType can be removed once https://github.com/dotnet/corefx/issues/31927 is fixed.
             return errorCode == SocketError.ConnectionReset ||
                    errorCode == SocketError.Shutdown ||
-                   (errorCode == SocketError.ConnectionAborted && IsWindows) ||
-                   (errorCode == SocketError.ProtocolType && IsMacOS);
+                   (errorCode == SocketError.ConnectionAborted && IsWindows);
         }
 
         private static bool IsConnectionAbortError(SocketError errorCode)

@@ -225,6 +225,11 @@ namespace System.Net.Quic.Implementations.MsQuic
                 throw new InvalidOperationException("Reading is not allowed on stream.");
             }
 
+            if (NetEventSource.IsEnabled)
+            {
+                NetEventSource.Info(this, $"[{GetHashCode()}] reading into Memory of '{destination.Length}' bytes.");
+            }
+
             lock (_sync)
             {
                 if (_readState == ReadState.ReadsCompleted)
@@ -474,6 +479,11 @@ namespace System.Net.Quic.Implementations.MsQuic
 
         private uint HandleEvent(ref StreamEvent evt)
         {
+            if (NetEventSource.IsEnabled)
+            {
+                NetEventSource.Info(this, $"[{GetHashCode()}] handling event '{evt.Type}'.");
+            }
+
             uint status = MsQuicStatusCodes.Success;
 
             try
@@ -956,9 +966,24 @@ namespace System.Net.Quic.Implementations.MsQuic
 
         private enum ReadState
         {
+            /// <summary>
+            /// The stream is open, but there is no data available.
+            /// </summary>
             None,
+
+            /// <summary>
+            /// Data is available in <see cref="_receiveQuicBuffers"/>.
+            /// </summary>
             IndividualReadComplete,
+
+            /// <summary>
+            /// The peer has gracefully shutdown their sends / our receives; the stream's reads are complete.
+            /// </summary>
             ReadsCompleted,
+
+            /// <summary>
+            /// User has aborted the stream, either via a cancellation token on ReadAsync(), or via AbortRead().
+            /// </summary>
             Aborted
         }
 

@@ -33,7 +33,6 @@
           "exclude": [
             "_Imports.razor",
             "Component1.razor",
-            "Component1.razor.css",
             "ExampleJsInterop.cs",
             "wwwroot/**"
           ]

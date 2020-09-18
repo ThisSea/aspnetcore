@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Internal;
@@ -32,7 +31,6 @@ namespace Microsoft.AspNetCore.SignalR
         private readonly HubDispatcher<THub> _dispatcher;
         private readonly bool _enableDetailedErrors;
         private readonly long? _maximumMessageSize;
-        private readonly int _maxParallelInvokes;
 
         // Internal for testing
         internal ISystemClock SystemClock { get; set; } = new SystemClock();
@@ -72,22 +70,22 @@ namespace Microsoft.AspNetCore.SignalR
             {
                 _maximumMessageSize = _hubOptions.MaximumReceiveMessageSize;
                 _enableDetailedErrors = _hubOptions.EnableDetailedErrors ?? _enableDetailedErrors;
-                _maxParallelInvokes = _hubOptions.MaximumParallelInvocationsPerClient;
 
                 if (_hubOptions.HubFilters != null)
                 {
-                    hubFilters = new List<IHubFilter>(_hubOptions.HubFilters);
+                    hubFilters = new List<IHubFilter>();
+                    hubFilters.AddRange(_hubOptions.HubFilters);
                 }
             }
             else
             {
                 _maximumMessageSize = _globalHubOptions.MaximumReceiveMessageSize;
                 _enableDetailedErrors = _globalHubOptions.EnableDetailedErrors ?? _enableDetailedErrors;
-                _maxParallelInvokes = _globalHubOptions.MaximumParallelInvocationsPerClient;
 
                 if (_globalHubOptions.HubFilters != null)
                 {
-                    hubFilters = new List<IHubFilter>(_globalHubOptions.HubFilters);
+                    hubFilters = new List<IHubFilter>();
+                    hubFilters.AddRange(_globalHubOptions.HubFilters);
                 }
             }
 
@@ -120,7 +118,6 @@ namespace Microsoft.AspNetCore.SignalR
                 StreamBufferCapacity = _hubOptions.StreamBufferCapacity ?? _globalHubOptions.StreamBufferCapacity ?? HubOptionsSetup.DefaultStreamBufferCapacity,
                 MaximumReceiveMessageSize = _maximumMessageSize,
                 SystemClock = SystemClock,
-                MaximumParallelInvocations = _maxParallelInvokes,
             };
 
             Log.ConnectedStarting(_logger);
@@ -226,7 +223,7 @@ namespace Microsoft.AspNetCore.SignalR
 
             try
             {
-                await connection.WriteAsync(closeMessage, ignoreAbort: true);
+                await connection.WriteAsync(closeMessage);
             }
             catch (Exception ex)
             {
@@ -239,6 +236,7 @@ namespace Microsoft.AspNetCore.SignalR
             var input = connection.Input;
             var protocol = connection.Protocol;
             connection.BeginClientTimeout();
+
 
             var binder = new HubConnectionBinder<THub>(_dispatcher, connection);
 
@@ -262,9 +260,8 @@ namespace Microsoft.AspNetCore.SignalR
                         {
                             while (protocol.TryParseMessage(ref buffer, binder, out var message))
                             {
-                                connection.StopClientTimeout();
-                                // This lets us know the timeout has stopped and we need to re-enable it after dispatching the message
                                 messageReceived = true;
+                                connection.StopClientTimeout();
                                 await _dispatcher.DispatchMessageAsync(connection, message);
                             }
 
@@ -291,9 +288,9 @@ namespace Microsoft.AspNetCore.SignalR
 
                                 if (protocol.TryParseMessage(ref segment, binder, out var message))
                                 {
-                                    connection.StopClientTimeout();
-                                    // This lets us know the timeout has stopped and we need to re-enable it after dispatching the message
                                     messageReceived = true;
+                                    connection.StopClientTimeout();
+
                                     await _dispatcher.DispatchMessageAsync(connection, message);
                                 }
                                 else if (overLength)

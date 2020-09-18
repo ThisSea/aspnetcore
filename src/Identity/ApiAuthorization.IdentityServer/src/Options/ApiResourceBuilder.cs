@@ -1,4 +1,4 @@
-// Copyright (c) .NET Foundation. All rights reserved.
+﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -24,8 +24,7 @@ namespace Microsoft.AspNetCore.ApiAuthorization.IdentityServer
         {
             var apiResource = new ApiResource(name);
             return new ApiResourceBuilder(apiResource)
-                .WithApplicationProfile(ApplicationProfiles.API)
-                .WithScopes(name);
+                .WithApplicationProfile(ApplicationProfiles.API);
         }
 
         /// <summary>
@@ -76,12 +75,12 @@ namespace Microsoft.AspNetCore.ApiAuthorization.IdentityServer
         {
             foreach (var scope in resourceScopes)
             {
-                if (_apiResource.Scopes.Any(s => s == scope))
+                if (_apiResource.Scopes.Any(s => s.Name == scope))
                 {
                     continue;
                 }
 
-                _apiResource.Scopes.Add(scope);
+                _apiResource.Scopes.Add(new Scope(scope));
             }
 
             return this;

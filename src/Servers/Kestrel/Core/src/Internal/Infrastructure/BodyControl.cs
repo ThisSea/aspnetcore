@@ -36,8 +36,6 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure
             _upgradeStream = new HttpUpgradeStream(_request, _response);
         }
 
-        public bool CanHaveBody { get; private set; }
-
         public Stream Upgrade()
         {
             // causes writes to context.Response.Body to throw
@@ -48,7 +46,6 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure
 
         public (Stream request, Stream response, PipeReader reader, PipeWriter writer) Start(MessageBody body)
         {
-            CanHaveBody = !body.IsEmpty;
             _requestReader.StartAcceptingReads(body);
             _emptyRequestReader.StartAcceptingReads(MessageBody.ZeroContentLengthClose);
             _responseWriter.StartAcceptingWrites();

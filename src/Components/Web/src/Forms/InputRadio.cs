@@ -27,8 +27,10 @@ namespace Microsoft.AspNetCore.Components.Forms
         /// <summary>
         /// Gets or sets the value of this input.
         /// </summary>
+        [AllowNull]
+        [MaybeNull]
         [Parameter]
-        public TValue? Value { get; set; }
+        public TValue Value { get; set; } = default;
 
         /// <summary>
         /// Gets or sets the name of the parent input radio group.

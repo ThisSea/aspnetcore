@@ -54,18 +54,7 @@ namespace Microsoft.NET.Sdk.BlazorWebAssembly
             }
         }
 
-        private static string Quote(string path)
-        {
-            if (string.IsNullOrEmpty(path) || (path[0] == '\"' && path[path.Length - 1] == '\"'))
-            {
-                // it's already quoted
-                return path;
-            }
-
-            return $"\"{path}\"";
-        }
-
-        protected override string GenerateCommandLineCommands() => Quote(ToolAssembly);
+        protected override string GenerateCommandLineCommands() => ToolAssembly;
 
         protected override string GenerateResponseFileCommands()
         {

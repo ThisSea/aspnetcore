@@ -75,32 +75,31 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding.Binders
             var bindingSucceeded = false;
 
             var modelMetadata = bindingContext.ModelMetadata;
-            var boundConstructor = modelMetadata.BoundConstructor;
 
-            if (boundConstructor != null)
+            if (bindingContext.Model == null)
             {
-                // Only record types are allowed to have a BoundConstructor. Binding a record type requires
-                // instantiating the type. This means we'll ignore a previously assigned bindingContext.Model value.
-                // This behaior is identical to input formatting with S.T.Json and Json.NET.
- 
-                var values = new object[boundConstructor.BoundConstructorParameters.Count];
-                var (attemptedParameterBinding, parameterBindingSucceeded) = await BindParametersAsync(
-                    bindingContext,
-                    propertyData,
-                    boundConstructor.BoundConstructorParameters,
-                    values);
-
-                attemptedBinding |= attemptedParameterBinding;
-                bindingSucceeded |= parameterBindingSucceeded;
-
-                if (!CreateModel(bindingContext, boundConstructor, values))
+                var boundConstructor = modelMetadata.BoundConstructor;
+                if (boundConstructor != null)
                 {
-                    return;
+                    var values = new object[boundConstructor.BoundConstructorParameters.Count];
+                    var (attemptedParameterBinding, parameterBindingSucceeded) = await BindParametersAsync(
+                        bindingContext,
+                        propertyData,
+                        boundConstructor.BoundConstructorParameters,
+                        values);
+
+                    attemptedBinding |= attemptedParameterBinding;
+                    bindingSucceeded |= parameterBindingSucceeded;
+
+                    if (!CreateModel(bindingContext, boundConstructor, values))
+                    {
+                        return;
+                    }
                 }
-            }
-            else if (bindingContext.Model == null)
-            {
-                CreateModel(bindingContext);
+                else
+                {
+                    CreateModel(bindingContext);
+                }
             }
 
             var (attemptedPropertyBinding, propertyBindingSucceeded) = await BindPropertiesAsync(

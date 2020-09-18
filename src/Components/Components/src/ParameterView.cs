@@ -88,8 +88,9 @@ namespace Microsoft.AspNetCore.Components
         /// <typeparam name="TValue">The type of the value.</typeparam>
         /// <param name="parameterName">The name of the parameter.</param>
         /// <returns>The parameter value if found; otherwise the default value for the specified type.</returns>
-        public TValue? GetValueOrDefault<TValue>(string parameterName)
-            => GetValueOrDefault<TValue?>(parameterName, default);
+        [return: MaybeNull]
+        public TValue GetValueOrDefault<TValue>(string parameterName)
+            => GetValueOrDefault<TValue>(parameterName, default!);
 
         /// <summary>
         /// Gets the value of the parameter with the specified name, or a specified default value

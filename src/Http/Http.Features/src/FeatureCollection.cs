@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Microsoft.AspNetCore.Http.Features
@@ -93,9 +94,10 @@ namespace Microsoft.AspNetCore.Http.Features
             }
         }
 
-        public TFeature? Get<TFeature>()
+        [return: MaybeNull]
+        public TFeature Get<TFeature>()
         {
-            return (TFeature?)this[typeof(TFeature)];
+            return (TFeature)this[typeof(TFeature)];
         }
 
         public void Set<TFeature>(TFeature instance)

@@ -44,8 +44,6 @@ namespace Company.WebApplication1
                     Configuration.GetConnectionString("DefaultConnection")));
 #endif
 
-            services.AddDatabaseDeveloperPageExceptionFilter();
-
             services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
@@ -75,7 +73,7 @@ namespace Company.WebApplication1
             {
                 app.UseDeveloperExceptionPage();
 #if (IndividualLocalAuth)
-                app.UseMigrationsEndPoint();
+                app.UseDatabaseErrorPage();
 #endif
             }
             else

@@ -10,9 +10,9 @@ namespace Microsoft.AspNetCore.Server.IIS.Core.IO
 {
     internal partial class WebSocketsAsyncIOEngine: IAsyncIOEngine
     {
-        private readonly IISHttpContext _context;
+        private readonly object _contextLock;
 
-        private readonly NativeSafeHandle _handler;
+        private readonly IntPtr _handler;
 
         private bool _isInitialized;
 
@@ -24,15 +24,15 @@ namespace Microsoft.AspNetCore.Server.IIS.Core.IO
 
         private AsyncInitializeOperation _cachedAsyncInitializeOperation;
 
-        public WebSocketsAsyncIOEngine(IISHttpContext context, NativeSafeHandle handler)
+        public WebSocketsAsyncIOEngine(object contextLock, IntPtr handler)
         {
-            _context = context;
+            _contextLock = contextLock;
             _handler = handler;
         }
 
         public ValueTask<int> ReadAsync(Memory<byte> memory)
         {
-            lock (_context._contextLock)
+            lock (_contextLock)
             {
                 ThrowIfNotInitialized();
 
@@ -45,7 +45,7 @@ namespace Microsoft.AspNetCore.Server.IIS.Core.IO
 
         public ValueTask<int> WriteAsync(ReadOnlySequence<byte> data)
         {
-            lock (_context._contextLock)
+            lock (_contextLock)
             {
                 ThrowIfNotInitialized();
 
@@ -58,7 +58,7 @@ namespace Microsoft.AspNetCore.Server.IIS.Core.IO
 
         public ValueTask FlushAsync(bool moreData)
         {
-            lock (_context._contextLock)
+            lock (_contextLock)
             {
                 if (_isInitialized)
                 {
@@ -110,15 +110,11 @@ namespace Microsoft.AspNetCore.Server.IIS.Core.IO
             }
         }
 
-        public void Complete()
+        public void Dispose()
         {
-            lock (_context._contextLock)
+            lock (_contextLock)
             {
-                // Should only call CancelIO if the client hasn't disconnected
-                if (!_context.ClientDisconnected)
-                {
-                    NativeMethods.HttpTryCancelIO(_handler);
-                }
+                NativeMethods.HttpTryCancelIO(_handler);
             }
         }
 

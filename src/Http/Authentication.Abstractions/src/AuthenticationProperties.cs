@@ -144,7 +144,8 @@ namespace Microsoft.AspNetCore.Authentication
         /// <typeparam name="T">Parameter type.</typeparam>
         /// <param name="key">Parameter key.</param>
         /// <returns>Retrieved value or the default value if the property is not set.</returns>
-        public T? GetParameter<T>(string key)
+        [return: MaybeNull]
+        public T GetParameter<T>(string key)
             => Parameters.TryGetValue(key, out var obj) && obj is T value ? value : default;
 
         /// <summary>
@@ -153,7 +154,7 @@ namespace Microsoft.AspNetCore.Authentication
         /// <typeparam name="T">Parameter type.</typeparam>
         /// <param name="key">Parameter key.</param>
         /// <param name="value">Value to set.</param>
-        public void SetParameter<T>(string key, T value)
+        public void SetParameter<T>(string key, [MaybeNull] T value)
             => Parameters[key] = value;
 
         /// <summary>

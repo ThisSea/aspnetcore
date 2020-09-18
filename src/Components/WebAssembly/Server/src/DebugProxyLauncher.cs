@@ -10,9 +10,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.CommandLineUtils;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,20 +24,20 @@ namespace Microsoft.AspNetCore.Builder
         private static readonly Regex NowListeningRegex = new Regex(@"^\s*Now listening on: (?<url>.*)$", RegexOptions.None, TimeSpan.FromSeconds(10));
         private static readonly Regex ApplicationStartedRegex = new Regex(@"^\s*Application started\. Press Ctrl\+C to shut down\.$", RegexOptions.None, TimeSpan.FromSeconds(10));
 
-        public static Task<string> EnsureLaunchedAndGetUrl(IServiceProvider serviceProvider, string devToolsHost)
+        public static Task<string> EnsureLaunchedAndGetUrl(IServiceProvider serviceProvider)
         {
             lock (LaunchLock)
             {
                 if (LaunchedDebugProxyUrl == null)
                 {
-                    LaunchedDebugProxyUrl = LaunchAndGetUrl(serviceProvider, devToolsHost);
+                    LaunchedDebugProxyUrl = LaunchAndGetUrl(serviceProvider);
                 }
 
                 return LaunchedDebugProxyUrl;
             }
         }
 
-        private static async Task<string> LaunchAndGetUrl(IServiceProvider serviceProvider, string devToolsHost)
+        private static async Task<string> LaunchAndGetUrl(IServiceProvider serviceProvider)
         {
             var tcs = new TaskCompletionSource<string>();
 
@@ -47,11 +45,10 @@ namespace Microsoft.AspNetCore.Builder
             var executablePath = LocateDebugProxyExecutable(environment);
             var muxerPath = DotNetMuxer.MuxerPathOrDefault();
             var ownerPid = Process.GetCurrentProcess().Id;
-
             var processStartInfo = new ProcessStartInfo
             {
                 FileName = muxerPath,
-                Arguments = $"exec \"{executablePath}\" --owner-pid {ownerPid} --DevToolsUrl {devToolsHost}",
+                Arguments = $"exec \"{executablePath}\" --owner-pid {ownerPid}",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
             };
@@ -90,7 +87,7 @@ namespace Microsoft.AspNetCore.Builder
             var debugProxyPath = Path.Combine(
                 Path.GetDirectoryName(assembly.Location),
                 "BlazorDebugProxy",
-                "BrowserDebugHost.dll");
+                "Microsoft.AspNetCore.Components.WebAssembly.DebugProxy.dll");
 
             if (!File.Exists(debugProxyPath))
             {
@@ -117,12 +114,6 @@ namespace Microsoft.AspNetCore.Builder
 
             void OnOutputDataReceived(object sender, DataReceivedEventArgs eventArgs)
             {
-                if (String.IsNullOrEmpty(eventArgs.Data))
-                {
-                    taskCompletionSource.TrySetException(new InvalidOperationException(
-                            "No output has been recevied from the application."));
-                }
-
                 if (ApplicationStartedRegex.IsMatch(eventArgs.Data))
                 {
                     aspNetProcess.OutputDataReceived -= OnOutputDataReceived;

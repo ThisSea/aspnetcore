@@ -4,27 +4,32 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 
 namespace Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore.Views
 {
     internal class DatabaseErrorPageModel
     {
         public DatabaseErrorPageModel(
+            Type contextType,
             Exception exception,
-            IEnumerable<DatabaseContextDetails> contextDetails,
-            DatabaseErrorPageOptions options,
-            PathString pathBase)
+            bool databaseExists,
+            bool pendingModelChanges,
+            IEnumerable<string> pendingMigrations,
+            DatabaseErrorPageOptions options)
         {
+            ContextType = contextType;
             Exception = exception;
-            ContextDetails = contextDetails;
+            DatabaseExists = databaseExists;
+            PendingModelChanges = pendingModelChanges;
+            PendingMigrations = pendingMigrations;
             Options = options;
-            PathBase = pathBase;
         }
 
+        public virtual Type ContextType { get; }
         public virtual Exception Exception { get; }
-        public virtual IEnumerable<DatabaseContextDetails> ContextDetails { get; }
+        public virtual bool DatabaseExists { get; }
+        public virtual bool PendingModelChanges { get; }
+        public virtual IEnumerable<string> PendingMigrations { get; }
         public virtual DatabaseErrorPageOptions Options { get; }
-        public virtual PathString PathBase { get; }
     }
 }

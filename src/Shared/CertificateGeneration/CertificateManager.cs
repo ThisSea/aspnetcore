@@ -15,7 +15,6 @@ namespace Microsoft.AspNetCore.Certificates.Generation
 {
     internal abstract class CertificateManager
     {
-        internal const int CurrentAspNetCoreCertificateVersion = 2;
         internal const string AspNetHttpsOid = "1.3.6.1.4.1.311.84.1.1";
         internal const string AspNetHttpsOidFriendlyName = "ASP.NET Core HTTPS development certificate";
 
@@ -28,9 +27,7 @@ namespace Microsoft.AspNetCore.Certificates.Generation
         public const int RSAMinimumKeySizeInBits = 2048;
 
         public static CertificateManager Instance { get; } = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ?
-#pragma warning disable CA1416 // Validate platform compatibility
             new WindowsCertificateManager() :
-#pragma warning restore CA1416 // Validate platform compatibility
             RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ?
                 new MacOSCertificateManager() as CertificateManager :
                 new UnixCertificateManager();
@@ -48,7 +45,7 @@ namespace Microsoft.AspNetCore.Certificates.Generation
 
         public string Subject { get; }
 
-        public CertificateManager() : this(LocalhostHttpsDistinguishedName, CurrentAspNetCoreCertificateVersion)
+        public CertificateManager() : this(LocalhostHttpsDistinguishedName, 1)
         {
         }
 
@@ -89,8 +86,10 @@ namespace Microsoft.AspNetCore.Certificates.Generation
                     Log.CheckCertificatesValidity();
                     var now = DateTimeOffset.Now;
                     var validCertificates = matchingCertificates
-                        .Where(c => IsValidCertificate(c, now, requireExportable))
-                        .OrderByDescending(c => GetCertificateVersion(c))
+                        .Where(c => c.NotBefore <= now &&
+                            now <= c.NotAfter &&
+                            (!requireExportable || IsExportable(c))
+                            && MatchesVersion(c))
                         .ToArray();
 
                     var invalidCertificates = matchingCertificates.Except(validCertificates);
@@ -124,7 +123,7 @@ namespace Microsoft.AspNetCore.Certificates.Generation
                 certificate.Extensions.OfType<X509Extension>()
                     .Any(e => string.Equals(oid, e.Oid.Value, StringComparison.Ordinal));
 
-            static byte GetCertificateVersion(X509Certificate2 c)
+            bool MatchesVersion(X509Certificate2 c)
             {
                 var byteArray = c.Extensions.OfType<X509Extension>()
                     .Where(e => string.Equals(AspNetHttpsOid, e.Oid.Value, StringComparison.Ordinal))
@@ -134,20 +133,14 @@ namespace Microsoft.AspNetCore.Certificates.Generation
                 if ((byteArray.Length == AspNetHttpsOidFriendlyName.Length && byteArray[0] == (byte)'A') || byteArray.Length == 0)
                 {
                     // No Version set, default to 0
-                    return 0b0;
+                    return 0 >= AspNetHttpsCertificateVersion;
                 }
                 else
                 {
                     // Version is in the only byte of the byte array.
-                    return byteArray[0];
+                    return byteArray[0] >= AspNetHttpsCertificateVersion;
                 }
             }
-
-            bool IsValidCertificate(X509Certificate2 certificate, DateTimeOffset currentDate, bool requireExportable) =>
-                certificate.NotBefore <= currentDate &&
-                currentDate <= certificate.NotAfter &&
-                (!requireExportable || IsExportable(certificate)) &&
-                GetCertificateVersion(certificate) >= AspNetHttpsCertificateVersion;
         }
 
         public IList<X509Certificate2> GetHttpsCertificates() =>
@@ -455,14 +448,7 @@ namespace Microsoft.AspNetCore.Certificates.Generation
                 }
                 else
                 {
-                    if (format == CertificateKeyExportFormat.Pem)
-                    {
-                        bytes = Encoding.ASCII.GetBytes(PemEncoding.Write("CERTIFICATE", certificate.Export(X509ContentType.Cert)));
-                    }
-                    else
-                    {
-                        bytes = certificate.Export(X509ContentType.Cert);
-                    }
+                    bytes = certificate.Export(X509ContentType.Cert);
                 }
             }
             catch (Exception e)

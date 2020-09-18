@@ -8,10 +8,7 @@ namespace Microsoft.AspNetCore.Components.E2ETest
     {
         public static IWebElement MountTestComponent<TComponent>(this IWebDriver browser) where TComponent : IComponent
         {
-            var componentType = typeof(TComponent);
-            var componentTypeName = componentType.Assembly == typeof(BasicTestApp.Program).Assembly ?
-                componentType.FullName :
-                componentType.AssemblyQualifiedName;
+            var componentTypeName = typeof(TComponent).FullName;
             var testSelector = browser.WaitUntilTestSelectorReady();
             testSelector.SelectByValue("none");
             testSelector.SelectByValue(componentTypeName);

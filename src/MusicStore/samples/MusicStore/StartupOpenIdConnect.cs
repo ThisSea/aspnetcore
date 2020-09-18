@@ -102,8 +102,6 @@ namespace MusicStore
                 options.ClientId = "[ClientId]";
                 options.ResponseType = OpenIdConnectResponseType.CodeIdToken;
             });
-
-            services.AddDatabaseDeveloperPageExceptionFilter();
         }
 
         public void Configure(IApplicationBuilder app)
@@ -124,7 +122,7 @@ namespace MusicStore
             // During development use the ErrorPage middleware to display error information in the browser
             app.UseDeveloperExceptionPage();
 
-            app.UseMigrationsEndPoint();
+            app.UseDatabaseErrorPage();
 
             // Configure Session.
             app.UseSession();

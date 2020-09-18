@@ -27,6 +27,12 @@ namespace Interop.FunctionalTests
     /// </summary>
     public class HttpClientHttp2InteropTests : LoggedTest
     {
+        public HttpClientHttp2InteropTests()
+        {
+            // H2C
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+        }
+
         public static IEnumerable<object[]> SupportedSchemes
         {
             get
@@ -1601,7 +1607,6 @@ namespace Interop.FunctionalTests
             handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
             var client = new HttpClient(handler);
             client.DefaultRequestVersion = HttpVersion.Version20;
-            client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionExact;
             return client;
         }
 
@@ -1610,7 +1615,6 @@ namespace Interop.FunctionalTests
             return new HttpRequestMessage(method, url)
             {
                 Version = HttpVersion.Version20,
-                VersionPolicy = HttpVersionPolicy.RequestVersionExact,
                 Content = content,
             };
         }

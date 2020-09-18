@@ -1,10 +1,7 @@
-// Copyright (c) .NET Foundation. All rights reserved.
+﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using Microsoft.AspNetCore.Cryptography;
 using Microsoft.AspNetCore.Cryptography.Cng;
 using Microsoft.AspNetCore.Cryptography.SafeHandles;
@@ -35,11 +32,9 @@ namespace Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption
                 return null;
             }
 
-            Debug.Assert(RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
             return CreateAuthenticatedEncryptorInstance(descriptor.MasterKey, descriptor.Configuration);
         }
 
-        [SupportedOSPlatform("windows")]
         internal CbcAuthenticatedEncryptor CreateAuthenticatedEncryptorInstance(
             ISecret secret,
             CngCbcAuthenticatedEncryptorConfiguration configuration)
@@ -56,7 +51,6 @@ namespace Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption
                 hmacAlgorithmHandle: GetHmacAlgorithmHandle(configuration));
         }
 
-        [SupportedOSPlatform("windows")]
         private BCryptAlgorithmHandle GetHmacAlgorithmHandle(CngCbcAuthenticatedEncryptorConfiguration configuration)
         {
             // basic argument checking
@@ -90,7 +84,6 @@ namespace Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption
             return algorithmHandle;
         }
 
-        [SupportedOSPlatform("windows")]
         private BCryptAlgorithmHandle GetSymmetricBlockCipherAlgorithmHandle(CngCbcAuthenticatedEncryptorConfiguration configuration)
         {
             // basic argument checking

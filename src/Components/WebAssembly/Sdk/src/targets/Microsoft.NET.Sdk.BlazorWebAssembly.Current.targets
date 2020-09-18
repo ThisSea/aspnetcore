@@ -53,14 +53,6 @@ Copyright (c) .NET Foundation. All rights reserved.
     <!-- Trimmer defaults -->
     <PublishTrimmed Condition="'$(PublishTrimmed)' == ''">true</PublishTrimmed>
     <TrimMode Condition="'$(TrimMode)' == ''">link</TrimMode>
-    <TrimmerRemoveSymbols Condition="'$(TrimmerRemoveSymbols)' == ''">false</TrimmerRemoveSymbols>
-
-    <!-- Runtime feature defaults to trim unnecessary code -->
-    <EventSourceSupport Condition="'$(EventSourceSupport)' == ''">false</EventSourceSupport>
-    <UseSystemResourceKeys Condition="'$(UseSystemResourceKeys)' == ''">true</UseSystemResourceKeys>
-    <EnableUnsafeUTF7Encoding Condition="'$(EnableUnsafeUTF7Encoding)' == ''">false</EnableUnsafeUTF7Encoding>
-    <HttpActivityPropagationSupport Condition="'$(HttpActivityPropagationSupport)' == ''">false</HttpActivityPropagationSupport>
-    <DebuggerSupport Condition="'$(DebuggerSupport)' == '' and '$(Configuration)' != 'Debug'">false</DebuggerSupport>
 
     <StaticWebAssetBasePath Condition="'$(StaticWebAssetBasePath)' == ''">/</StaticWebAssetBasePath>
     <BlazorCacheBootResources Condition="'$(BlazorCacheBootResources)' == ''">true</BlazorCacheBootResources>
@@ -76,12 +68,6 @@ Copyright (c) .NET Foundation. All rights reserved.
     <_BlazorOutputPath>wwwroot\_framework\</_BlazorOutputPath>
 
   </PropertyGroup>
-
-  <ItemGroup>
-    <!-- Configuration for the platform compatibility analyzer. See https://github.com/dotnet/designs/blob/master/accepted/2020/platform-exclusion/platform-exclusion.md#build-configuration-for-platforms -->
-    <SupportedPlatform Remove="@(SupportedPlatform)" />
-    <SupportedPlatform Include="browser" />
-  </ItemGroup>
 
   <Import Project="Microsoft.NET.Sdk.BlazorWebAssembly.ServiceWorkerAssetsManifest.targets" Condition="'$(ServiceWorkerAssetsManifest)' != ''" />
 
@@ -126,9 +112,6 @@ Copyright (c) .NET Foundation. All rights reserved.
       <_BlazorSatelliteAssemblyCacheFile>$(IntermediateOutputPath)blazor.satelliteasm.props</_BlazorSatelliteAssemblyCacheFile>
       <!-- Workaround for https://github.com/dotnet/sdk/issues/12114-->
       <PublishDir Condition="'$(AppendRuntimeIdentifierToOutputPath)' != 'true' AND '$(PublishDir)' == '$(OutputPath)$(RuntimeIdentifier)\$(PublishDirName)\'">$(OutputPath)$(PublishDirName)\</PublishDir>
-
-      <_BlazorWebAssemblyLoadAllGlobalizationData>$(BlazorWebAssemblyLoadAllGlobalizationData)</_BlazorWebAssemblyLoadAllGlobalizationData>
-      <_BlazorWebAssemblyLoadAllGlobalizationData Condition="'$(_BlazorWebAssemblyLoadAllGlobalizationData)' == ''">false</_BlazorWebAssemblyLoadAllGlobalizationData>
     </PropertyGroup>
 
     <ItemGroup>
@@ -139,12 +122,6 @@ Copyright (c) .NET Foundation. All rights reserved.
 
       <!-- Clear out temporary build artifacts that the runtime packages -->
       <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" Condition="'%(ReferenceCopyLocalPaths.Extension)' == '.a'" />
-
-      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)"
-        Condition="'$(BlazorEnableTimeZoneSupport)' == 'false' AND '%(ReferenceCopyLocalPaths.FileName)%(ReferenceCopyLocalPaths.Extension)' == 'dotnet.timezones.blat'" />
-
-      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)"
-        Condition="'$(InvariantGlobalization)' == 'true' AND '%(ReferenceCopyLocalPaths.Extension)' == '.dat' AND $([System.String]::Copy('%(ReferenceCopyLocalPaths.FileName)').StartsWith('icudt'))" />
 
       <!--
         ReferenceCopyLocalPaths includes satellite assemblies from referenced projects but are inexpicably missing
@@ -269,29 +246,15 @@ Copyright (c) .NET Foundation. All rights reserved.
 
     <GetCurrentProjectStaticWebAssetsDependsOn>
       $(GetCurrentProjectStaticWebAssetsDependsOn);
-      _BlazorWasmReplaceBundle;
+      AddScopedCssBundle;
       _BlazorWasmPrepareForRun;
     </GetCurrentProjectStaticWebAssetsDependsOn>
   </PropertyGroup>
 
-  <Target Name="_BlazorWasmReplaceBundle">
-    <ItemGroup>
-      <StaticWebAsset Include="@(_AppBundleStaticWebAsset)" />
-      <Staticwebasset Remove="@(_ProjectBundleStaticWebAsset)" />
-    </ItemGroup>
-  </Target>
-
   <Target Name="_BlazorWasmPrepareForRun" DependsOnTargets="_ProcessBlazorWasmOutputs" BeforeTargets="_RazorPrepareForRun" AfterTargets="GetCurrentProjectStaticWebAssets">
     <PropertyGroup>
       <_BlazorBuildBootJsonPath>$(IntermediateOutputPath)blazor.boot.json</_BlazorBuildBootJsonPath>
-      <_BlazorOutputContent>@(_BlazorOutputWithHash)</_BlazorOutputContent>
-      <_BlazorWebAssemblyLoadAllGlobalizationData Condition="'$(BlazorWebAssemblyLoadAllGlobalizationData)' == ''">false</_BlazorWebAssemblyLoadAllGlobalizationData>
     </PropertyGroup>
-
-    <Error
-      Text="Unable to find %(BlazorWebAssemblyLazyLoad.Identity) to be lazy loaded later. Confirm that project or package references are included and the reference is used in the project."
-      Code="BLAZORSDK1001"
-      Condition="'@(BlazorWebAssemblyLazyLoad)' != '' And !($([System.String]::Copy('$(_BlazorOutputContent)').Contains('%(BlazorWebAssemblyLazyLoad.Identity)')))" />
 
     <GenerateBlazorWebAssemblyBootJson
       AssemblyPath="@(IntermediateAssembly)"
@@ -301,9 +264,7 @@ Copyright (c) .NET Foundation. All rights reserved.
       CacheBootResources="$(BlazorCacheBootResources)"
       OutputPath="$(_BlazorBuildBootJsonPath)"
       ConfigurationFiles="@(_BlazorConfigFile)"
-      LazyLoadedAssemblies="@(BlazorWebAssemblyLazyLoad)"
-      InvariantGlobalization="$(InvariantGlobalization)"
-      LoadAllICUData="$(_BlazorWebAssemblyLoadAllGlobalizationData)" />
+      LazyLoadedAssemblies="@(BlazorWebAssemblyLazyLoad)" />
 
     <ItemGroup>
       <FileWrites Include="$(OutDir)$(_BlazorOutputPath)blazor.boot.json" />
@@ -428,7 +389,7 @@ Copyright (c) .NET Foundation. All rights reserved.
     <ItemGroup>
       <_BlazorTypeGranularAssembly
           Include="@(ManagedAssemblyToLink)"
-          Condition="'%(Extension)' == '.dll' AND $([System.String]::Copy('%(Filename)').StartsWith('Microsoft.AspNetCore.'))">
+          Condition="'%(Extension)' == '.dll' AND ($([System.String]::Copy('%(Filename)').StartsWith('Microsoft.AspNetCore.')) or $([System.String]::Copy('%(Filename)').StartsWith('Microsoft.Extensions.')))">
         <Required>false</Required>
         <Preserve>all</Preserve>
       </_BlazorTypeGranularAssembly>
@@ -469,12 +430,6 @@ Copyright (c) .NET Foundation. All rights reserved.
 
       <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.a'" />
 
-      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
-        Condition="'$(BlazorEnableTimeZoneSupport)' == 'false' AND '%(ResolvedFileToPublish.FileName)%(ResolvedFileToPublish.Extension)' == 'dotnet.timezones.blat'" />
-
-      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
-        Condition="'$(InvariantGlobalization)' == 'true' AND '%(ResolvedFileToPublish.Extension)' == '.dat' AND $([System.String]::Copy('%(ResolvedFileToPublish.FileName)').StartsWith('icudt'))" />
-
       <!-- Remove dotnet.js from publish output -->
       <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(ResolvedFileToPublish.RelativePath)' == 'dotnet.js'" />
 
@@ -484,7 +439,7 @@ Copyright (c) .NET Foundation. All rights reserved.
         Condition="'%(ResolvedFileToPublish.RelativePath)' != 'web.config' AND !$([System.String]::Copy('%(ResolvedFileToPublish.RelativePath)').Replace('\','/').StartsWith('wwwroot/'))" />
 
       <!-- Remove pdbs from the publish output -->
-      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'$(CopyOutputSymbolsToPublishDirectory)' != 'true' AND '%(Extension)' == '.pdb'" />
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'$(BlazorWebAssemblyEnableDebugging)' != 'true' AND '%(Extension)' == '.pdb'" />
     </ItemGroup>
 
     <ItemGroup Condition="'@(ResolvedFileToPublish->AnyHaveMetadataValue('RelativePath', 'web.config'))' != 'true'">
@@ -506,15 +461,6 @@ Copyright (c) .NET Foundation. All rights reserved.
       <Output TaskParameter="Items" ItemName="_BlazorPublishBootResourceWithHash" />
     </GetFileHash>
 
-    <PropertyGroup>
-      <_BlazorOutputContent>@(_BlazorPublishBootResourceWithHash)</_BlazorOutputContent>
-    </PropertyGroup>
-
-    <Error
-      Text="Unable to find %(BlazorWebAssemblyLazyLoad.Identity) to be lazy loaded later. Confirm that project or package references are included and the reference is used in the project."
-      Code="BLAZORSDK1001"
-      Condition="'@(BlazorWebAssemblyLazyLoad)' != '' And !($([System.String]::Copy('$(_BlazorOutputContent)').Contains('%(BlazorWebAssemblyLazyLoad.Identity)')))" />
-
     <GenerateBlazorWebAssemblyBootJson
       AssemblyPath="@(IntermediateAssembly)"
       Resources="@(_BlazorPublishBootResourceWithHash)"
@@ -523,9 +469,7 @@ Copyright (c) .NET Foundation. All rights reserved.
       CacheBootResources="$(BlazorCacheBootResources)"
       OutputPath="$(IntermediateOutputPath)blazor.publish.boot.json"
       ConfigurationFiles="@(_BlazorConfigFile)"
-      LazyLoadedAssemblies="@(BlazorWebAssemblyLazyLoad)"
-      InvariantGlobalization="$(InvariantGlobalization)"
-      LoadAllICUData="$(_BlazorWebAssemblyLoadAllGlobalizationData)" />
+      LazyLoadedAssemblies="@(BlazorWebAssemblyLazyLoad)" />
 
     <ItemGroup>
       <ResolvedFileToPublish

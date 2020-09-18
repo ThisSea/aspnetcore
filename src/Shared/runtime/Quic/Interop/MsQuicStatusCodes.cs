@@ -26,16 +26,13 @@ namespace System.Net.Quic.Implementations.MsQuic.Internal
             internal const uint HandshakeFailure = 0x80410000;
             internal const uint Aborted = 0x80004004;
             internal const uint AddressInUse = 0x80072740;
-            internal const uint ConnectionTimeout = 0x80410006;
-            internal const uint ConnectionIdle = 0x80410005;
+            internal const uint ConnectionTimeout = 0x800704CF;
+            internal const uint ConnectionIdle = 0x800704D4;
+            internal const uint InternalError = 0x80004005;
+            internal const uint ServerBusy = 0x800704C9;
+            internal const uint ProtocolError = 0x800704CD;
             internal const uint HostUnreachable = 0x800704D0;
-            internal const uint InternalError = 0x80410003;
-            internal const uint ConnectionRefused = 0x800704C9;
-            internal const uint ProtocolError = 0x80410004;
             internal const uint VerNegError = 0x80410001;
-            internal const uint TlsError = 0x80072B18;
-            internal const uint UserCanceled = 0x80410002;
-            internal const uint AlpnNegotiationFailure = 0x80410007;
 
             // TODO return better error messages here.
             public static string GetError(uint status)
@@ -56,15 +53,11 @@ namespace System.Net.Quic.Implementations.MsQuic.Internal
                     AddressInUse => "ADDRESS_IN_USE",
                     ConnectionTimeout => "CONNECTION_TIMEOUT",
                     ConnectionIdle => "CONNECTION_IDLE",
-                    HostUnreachable => "UNREACHABLE",
                     InternalError => "INTERNAL_ERROR",
-                    ConnectionRefused => "CONNECTION_REFUSED",
+                    ServerBusy => "SERVER_BUSY",
                     ProtocolError => "PROTOCOL_ERROR",
                     VerNegError => "VER_NEG_ERROR",
-                    TlsError => "TLS_ERROR",
-                    UserCanceled => "USER_CANCELED",
-                    AlpnNegotiationFailure => "ALPN_NEG_FAILURE",
-                    _ => $"0x{status:X8}"
+                    _ => status.ToString()
                 };
             }
         }
@@ -86,15 +79,9 @@ namespace System.Net.Quic.Implementations.MsQuic.Internal
             internal const uint ConnectionTimeout = 110;
             internal const uint ConnectionIdle = 200000011;
             internal const uint InternalError = 200000012;
-            internal const uint ConnectionRefused = 200000007;
+            internal const uint ServerBusy = 200000007;
             internal const uint ProtocolError = 200000013;
             internal const uint VerNegError = 200000014;
-            internal const uint EpollError = 200000015;
-            internal const uint DnsResolutionError = 200000016;
-            internal const uint SocketError = 200000017;
-            internal const uint TlsError = 200000018;
-            internal const uint UserCanceled = 200000019;
-            internal const uint AlpnNegotiationFailure = 200000020;
 
             // TODO return better error messages here.
             public static string GetError(uint status)
@@ -116,16 +103,10 @@ namespace System.Net.Quic.Implementations.MsQuic.Internal
                     ConnectionTimeout => "CONNECTION_TIMEOUT",
                     ConnectionIdle => "CONNECTION_IDLE",
                     InternalError => "INTERNAL_ERROR",
-                    ConnectionRefused => "CONNECTION_REFUSED",
+                    ServerBusy => "SERVER_BUSY",
                     ProtocolError => "PROTOCOL_ERROR",
                     VerNegError => "VER_NEG_ERROR",
-                    EpollError => "EPOLL_ERROR",
-                    DnsResolutionError => "DNS_RESOLUTION_ERROR",
-                    SocketError => "SOCKET_ERROR",
-                    TlsError => "TLS_ERROR",
-                    UserCanceled => "USER_CANCELED",
-                    AlpnNegotiationFailure => "ALPN_NEG_FAILURE",
-                    _ => $"0x{status:X8}"
+                    _ => status.ToString()
                 };
             }
         }

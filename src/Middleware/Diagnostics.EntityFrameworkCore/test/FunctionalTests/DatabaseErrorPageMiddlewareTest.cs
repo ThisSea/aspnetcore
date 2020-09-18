@@ -33,10 +33,8 @@ namespace Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore.Tests
                 {
                     webHostBuilder
                     .UseTestServer()
-#pragma warning disable CS0618 // Type or member is obsolete
                     .Configure(app => app
                     .UseDatabaseErrorPage()
-#pragma warning restore CS0618 // Type or member is obsolete
                     .UseMiddleware<SuccessMiddleware>());
                 }).Build();
 
@@ -70,10 +68,8 @@ namespace Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore.Tests
                 {
                     webHostBuilder
                     .UseTestServer()
-#pragma warning disable CS0618 // Type or member is obsolete
                     .Configure(app => app
                     .UseDatabaseErrorPage()
-#pragma warning restore CS0618 // Type or member is obsolete
                     .UseMiddleware<ExceptionMiddleware>());
                 }).Build();
 
@@ -144,9 +140,7 @@ namespace Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore.Tests
 
                 Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
                 var content = await response.Content.ReadAsStringAsync();
-                Assert.Contains(StringsHelpers.GetResourceString("DatabaseErrorPage_NoDbOrMigrationsTitle"), content);
-                Assert.Contains(StringsHelpers.GetResourceString("DatabaseErrorPage_NoDbOrMigrationsInfo"), content);
-                Assert.Contains(typeof(BloggingContext).Name, content);
+                Assert.Contains(StringsHelpers.GetResourceString("FormatDatabaseErrorPage_NoDbOrMigrationsTitle", typeof(BloggingContext).Name), content);
                 Assert.Contains(StringsHelpers.GetResourceString("DatabaseErrorPage_AddMigrationCommandPMC").Replace(">", "&gt;"), content);
                 Assert.Contains(StringsHelpers.GetResourceString("DatabaseErrorPage_ApplyMigrationsCommandPMC").Replace(">", "&gt;"), content);
             }
@@ -206,9 +200,7 @@ namespace Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore.Tests
                 Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
 
                 var content = await response.Content.ReadAsStringAsync();
-                Assert.Contains(StringsHelpers.GetResourceString("DatabaseErrorPage_PendingMigrationsTitle"), content);
-                Assert.Contains(StringsHelpers.GetResourceString("DatabaseErrorPage_PendingMigrationsInfo"), content);
-                Assert.Contains(typeof(BloggingContextWithMigrations).Name, content);
+                Assert.Contains(StringsHelpers.GetResourceString("FormatDatabaseErrorPage_PendingMigrationsTitle", typeof(BloggingContextWithMigrations).Name), content);
                 Assert.Contains(StringsHelpers.GetResourceString("DatabaseErrorPage_ApplyMigrationsCommandPMC").Replace(">", "&gt;"), content);
                 Assert.Contains("<li>111111111111111_MigrationOne</li>", content);
                 Assert.Contains("<li>222222222222222_MigrationTwo</li>", content);
@@ -245,9 +237,7 @@ namespace Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore.Tests
                 Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
 
                 var content = await response.Content.ReadAsStringAsync();
-                Assert.Contains(StringsHelpers.GetResourceString("DatabaseErrorPage_PendingChangesTitle"), content);
-                Assert.Contains(StringsHelpers.GetResourceString("DatabaseErrorPage_PendingChangesInfo"), content);
-                Assert.Contains(typeof(BloggingContextWithPendingModelChanges).Name, content);
+                Assert.Contains(StringsHelpers.GetResourceString("FormatDatabaseErrorPage_PendingChangesTitle", typeof(BloggingContextWithPendingModelChanges).Name), content);
                 Assert.Contains(StringsHelpers.GetResourceString("DatabaseErrorPage_AddMigrationCommandCLI").Replace(">", "&gt;"), content);
                 Assert.Contains(StringsHelpers.GetResourceString("DatabaseErrorPage_AddMigrationCommandPMC").Replace(">", "&gt;"), content);
                 Assert.Contains(StringsHelpers.GetResourceString("DatabaseErrorPage_ApplyMigrationsCommandCLI").Replace(">", "&gt;"), content);
@@ -293,7 +283,7 @@ namespace Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore.Tests
                 // Ensure the url we're going to test is what the page is using in it's JavaScript
                 var javaScriptEncoder = JavaScriptEncoder.Default;
                 Assert.Contains("req.open(\"POST\", \"" + JavaScriptEncode(expectedMigrationsEndpoint) + "\", true);", content);
-                Assert.Contains("data-assemblyname=\"" + JavaScriptEncode(expectedContextType) + "\"", content);
+                Assert.Contains("var formBody = \"context=" + JavaScriptEncode(UrlEncode(expectedContextType)) + "\";", content);
 
                 // Step Two: Request to migrations endpoint
                 var formData = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>
@@ -343,12 +333,10 @@ namespace Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore.Tests
                     .UseTestServer()
                     .Configure(app =>
                     {
-#pragma warning disable CS0618 // Type or member is obsolete
                         app.UseDatabaseErrorPage(new DatabaseErrorPageOptions
                         {
                             MigrationsEndPointPath = new PathString(migrationsEndpoint)
                         });
-#pragma warning restore CS0618 // Type or member is obsolete
 
                         app.UseMiddleware<PendingMigrationsMiddleware>();
                     })
@@ -386,9 +374,7 @@ namespace Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore.Tests
                     .UseTestServer()
                     .Configure(app =>
                     {
-#pragma warning disable CS0618 // Type or member is obsolete
                         app.UseDatabaseErrorPage();
-#pragma warning restore CS0618 // Type or member is obsolete
                         app.UseMiddleware<ContextNotRegisteredInServicesMiddleware>();
 #pragma warning disable CS0618 // Type or member is obsolete
                         app.ApplicationServices.GetService<ILoggerFactory>().AddProvider(logProvider);
@@ -398,10 +384,10 @@ namespace Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore.Tests
 
             await host.StartAsync();
 
+            var server = host.GetTestServer();
 
             try
             {
-                using var server = host.GetTestServer();
                 await server.CreateClient().GetAsync("http://localhost/");
             }
             catch (Exception exception)
@@ -446,10 +432,10 @@ namespace Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore.Tests
                 var logProvider = new TestLoggerProvider();
 
                 using var host = await SetupServer<BloggingContextWithSnapshotThatThrows, ExceptionInLogicMiddleware>(database, logProvider);
+                using var server = host.GetTestServer();
 
                 try
                 {
-                    using var server = host.GetTestServer();
                     await server.CreateClient().GetAsync("http://localhost/");
                 }
                 catch (Exception exception)
@@ -492,9 +478,7 @@ namespace Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore.Tests
                 Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
                 var content = await response.Content.ReadAsStringAsync();
                 Assert.Contains("I wrapped your exception", content);
-                Assert.Contains(StringsHelpers.GetResourceString("DatabaseErrorPage_NoDbOrMigrationsTitle"), content);
-                Assert.Contains(StringsHelpers.GetResourceString("DatabaseErrorPage_NoDbOrMigrationsInfo"), content);
-                Assert.Contains(typeof(BloggingContext).Name, content);
+                Assert.Contains(StringsHelpers.GetResourceString("FormatDatabaseErrorPage_NoDbOrMigrationsTitle", typeof(BloggingContext).Name), content);
             }
         }
 
@@ -529,9 +513,7 @@ namespace Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore.Tests
                     .UseTestServer()
                     .Configure(app =>
                     {
-#pragma warning disable CS0618 // Type or member is obsolete
                         app.UseDatabaseErrorPage();
-#pragma warning restore CS0618 // Type or member is obsolete
 
                         app.UseMiddleware<TMiddleware>();
 

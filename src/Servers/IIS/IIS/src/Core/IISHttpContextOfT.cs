@@ -3,6 +3,8 @@
 
 using System;
 using System.Buffers;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting.Server;
@@ -16,7 +18,7 @@ namespace Microsoft.AspNetCore.Server.IIS.Core
     {
         private readonly IHttpApplication<TContext> _application;
 
-        public IISHttpContextOfT(MemoryPool<byte> memoryPool, IHttpApplication<TContext> application, NativeSafeHandle pInProcessHandler, IISServerOptions options, IISHttpServer server, ILogger logger, bool useLatin1)
+        public IISHttpContextOfT(MemoryPool<byte> memoryPool, IHttpApplication<TContext> application, IntPtr pInProcessHandler, IISServerOptions options, IISHttpServer server, ILogger logger, bool useLatin1)
             : base(memoryPool, pInProcessHandler, options, server, logger, useLatin1)
         {
             _application = application;
@@ -24,36 +26,31 @@ namespace Microsoft.AspNetCore.Server.IIS.Core
 
         public override async Task<bool> ProcessRequestAsync()
         {
+            InitializeContext();
+
             var context = default(TContext);
             var success = true;
 
             try
             {
-                InitializeContext();
+                context = _application.CreateContext(this);
 
-                try
-                {
-                    context = _application.CreateContext(this);
-
-                    await _application.ProcessRequestAsync(context);
-                }
-                catch (BadHttpRequestException ex)
-                {
-                    SetBadRequestState(ex);
-                    ReportApplicationError(ex);
-                    success = false;
-                }
-                catch (Exception ex)
-                {
-                    ReportApplicationError(ex);
-                    success = false;
-                }
-
-                if (ResponsePipeWrapper != null)
-                {
-                    await ResponsePipeWrapper.CompleteAsync();
-                }
-
+                await _application.ProcessRequestAsync(context);
+            }
+            catch (BadHttpRequestException ex)
+            {
+                SetBadRequestState(ex);
+                ReportApplicationError(ex);
+                success = false;
+            }
+            catch (Exception ex)
+            {
+                ReportApplicationError(ex);
+                success = false;
+            }
+            finally
+            {
+                await CompleteResponseBodyAsync();
                 _streams.Stop();
 
                 if (!HasResponseStarted && _applicationException == null && _onStarting != null)
@@ -62,27 +59,45 @@ namespace Microsoft.AspNetCore.Server.IIS.Core
                     // Dispose
                 }
 
-                if (!success && HasResponseStarted && NativeMethods.HttpSupportTrailer(_requestNativeHandle))
+                if (!success && HasResponseStarted && NativeMethods.HttpSupportTrailer(_pInProcessHandler))
                 {
                     // HTTP/2 INTERNAL_ERROR = 0x2 https://tools.ietf.org/html/rfc7540#section-7
                     // Otherwise the default is Cancel = 0x8.
                     SetResetCode(2);
                 }
 
-                if (!_requestAborted)
+                if (_onCompleted != null)
                 {
-                    await ProduceEnd();
+                    await FireOnCompleted();
                 }
-                else if (!HasResponseStarted && _requestRejectedException == null)
-                {
-                    // If the request was aborted and no response was sent, there's no
-                    // meaningful status code to log.
-                    StatusCode = 0;
-                    success = false;
-                }
+            }
 
+            if (!_requestAborted)
+            {
+                await ProduceEnd();
+            }
+            else if (!HasResponseStarted && _requestRejectedException == null)
+            {
+                // If the request was aborted and no response was sent, there's no
+                // meaningful status code to log.
+                StatusCode = 0;
+                success = false;
+            }
+
+            try
+            {
+                _application.DisposeContext(context, _applicationException);
+            }
+            catch (Exception ex)
+            {
+                // TODO Log this
+                _applicationException = _applicationException ?? ex;
+                success = false;
+            }
+            finally
+            {
                 // Complete response writer and request reader pipe sides
-                _bodyOutput.Complete();
+                _bodyOutput.Dispose();
                 _bodyInputPipe?.Reader.Complete();
 
                 // Allow writes to drain
@@ -92,32 +107,11 @@ namespace Microsoft.AspNetCore.Server.IIS.Core
                 }
 
                 // Cancel all remaining IO, there might be reads pending if not entire request body was sent by client
-                AsyncIO?.Complete();
+                AsyncIO?.Dispose();
 
                 if (_readBodyTask != null)
                 {
                     await _readBodyTask;
-                }
-            }
-            catch (Exception ex)
-            {
-                success = false;
-                ReportApplicationError(ex);
-            }
-            finally
-            {
-                if (_onCompleted != null)
-                {
-                    await FireOnCompleted();
-                }
-
-                try
-                {
-                    _application.DisposeContext(context, _applicationException);
-                }
-                catch (Exception ex)
-                {
-                    ReportApplicationError(ex);
                 }
             }
             return success;

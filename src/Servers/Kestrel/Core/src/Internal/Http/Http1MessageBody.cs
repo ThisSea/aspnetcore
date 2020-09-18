@@ -16,34 +16,29 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http
     internal abstract class Http1MessageBody : MessageBody
     {
         protected readonly Http1Connection _context;
-        private bool _readerCompleted;
+        protected bool _completed;
 
         protected Http1MessageBody(Http1Connection context) : base(context)
         {
             _context = context;
         }
 
-        public override ValueTask<ReadResult> ReadAsync(CancellationToken cancellationToken = default)
+        [StackTraceHidden]
+        protected void ThrowUnexpectedEndOfRequestContent()
         {
-            ThrowIfReaderCompleted();
-            return ReadAsyncInternal(cancellationToken);
-        }
+            // OnInputOrOutputCompleted() is an idempotent method that closes the connection. Sometimes
+            // input completion is observed here before the Input.OnWriterCompleted() callback is fired,
+            // so we call OnInputOrOutputCompleted() now to prevent a race in our tests where a 400
+            // response is written after observing the unexpected end of request content instead of just
+            // closing the connection without a response as expected.
+            _context.OnInputOrOutputCompleted();
 
-        public abstract ValueTask<ReadResult> ReadAsyncInternal(CancellationToken cancellationToken = default);
-
-        public override bool TryRead(out ReadResult readResult)
-        {
-            ThrowIfReaderCompleted();
-            return TryReadInternal(out readResult);
+            KestrelBadHttpRequestException.Throw(RequestRejectionReason.UnexpectedEndOfRequestContent);
         }
 
         public abstract bool TryReadInternal(out ReadResult readResult);
 
-        public override void Complete(Exception exception)
-        {
-            _readerCompleted = true;
-            _context.ReportApplicationError(exception);
-        }
+        public abstract ValueTask<ReadResult> ReadAsyncInternal(CancellationToken cancellationToken = default);
 
         protected override Task OnConsumeAsync()
         {
@@ -94,7 +89,7 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http
                     AdvanceTo(result.Buffer.End);
                 } while (!result.IsCompleted);
             }
-            catch (BadHttpRequestException ex)
+            catch (Microsoft.AspNetCore.Http.BadHttpRequestException ex)
             {
                 _context.SetBadRequestState(ex);
             }
@@ -189,26 +184,12 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http
             return keepAlive ? MessageBody.ZeroContentLengthKeepAlive : MessageBody.ZeroContentLengthClose;
         }
 
-        [StackTraceHidden]
-        private void ThrowIfReaderCompleted()
+        protected void ThrowIfCompleted()
         {
-            if (_readerCompleted)
+            if (_completed)
             {
                 throw new InvalidOperationException("Reading is not allowed after the reader was completed.");
             }
-        }
-
-        [StackTraceHidden]
-        protected void ThrowUnexpectedEndOfRequestContent()
-        {
-            // OnInputOrOutputCompleted() is an idempotent method that closes the connection. Sometimes
-            // input completion is observed here before the Input.OnWriterCompleted() callback is fired,
-            // so we call OnInputOrOutputCompleted() now to prevent a race in our tests where a 400
-            // response is written after observing the unexpected end of request content instead of just
-            // closing the connection without a response as expected.
-            _context.OnInputOrOutputCompleted();
-
-            KestrelBadHttpRequestException.Throw(RequestRejectionReason.UnexpectedEndOfRequestContent);
         }
     }
 }

@@ -22,7 +22,6 @@ namespace Identity.DefaultUI.WebSite
         {
             base.ConfigureServices(services);
             services.AddMvc(options => options.EnableEndpointRouting = false);
-            services.AddDatabaseDeveloperPageExceptionFilter();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -34,7 +33,7 @@ namespace Identity.DefaultUI.WebSite
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseMigrationsEndPoint();
+                app.UseDatabaseErrorPage();
             }
             else
             {

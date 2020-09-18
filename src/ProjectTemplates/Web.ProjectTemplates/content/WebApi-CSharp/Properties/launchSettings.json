@@ -21,11 +21,7 @@
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
-      //#if(EnableOpenAPI)
-      "launchUrl": "swagger",
-      //#else
       "launchUrl": "weatherforecast",
-      //#endif
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -34,11 +30,7 @@
       "commandName": "Project",
       "dotnetRunMessages": "true",
       "launchBrowser": true,
-      //#if(EnableOpenAPI)
-      "launchUrl": "swagger",
-      //#else
       "launchUrl": "weatherforecast",
-      //#endif
       //#if(RequiresHttps)
       "applicationUrl": "https://localhost:5001;http://localhost:5000",
       //#else

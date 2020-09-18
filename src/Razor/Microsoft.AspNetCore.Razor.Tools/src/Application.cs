@@ -96,7 +96,7 @@ namespace Microsoft.AspNetCore.Razor.Tools
 
         private static string[] ExpandResponseFiles(string[] args)
         {
-            var expandedArgs = new List<string>(args.Length);
+            var expandedArgs = new List<string>();
             foreach (var arg in args)
             {
                 if (!arg.StartsWith("@", StringComparison.Ordinal))

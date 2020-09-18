@@ -4,9 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 #if (OrganizationalAuth || IndividualB2CAuth)
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
+using Microsoft.Identity.Web.TokenCacheProviders.InMemory;
 #endif
 #if (OrganizationalAuth)
 #if (MultiOrgAuth)
@@ -73,36 +73,33 @@ namespace BlazorServerWeb_CSharp
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 #elif (OrganizationalAuth)
 #if (GenerateApiOrGraph)
-            var initialScopes = Configuration.GetValue<string>("DownstreamApi:Scopes")?.Split(' ');
-
+            string[] scopes = Configuration.GetValue<string>("CalledApi:CalledApiScopes")?.Split(' ');
 #endif
-            services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
 #if (GenerateApiOrGraph)
-                .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"))
-                    .EnableTokenAcquisitionToCallDownstreamApi(initialScopes)
+            services.AddMicrosoftWebAppAuthentication(Configuration, "AzureAd")
+                .AddMicrosoftWebAppCallsWebApi(Configuration, scopes, "AzureAd")
+                .AddInMemoryTokenCaches();
+#else
+            services.AddMicrosoftWebAppAuthentication(Configuration, "AzureAd");
+#endif
 #if (GenerateApi)
-                        .AddDownstreamWebApi("DownstreamApi", Configuration.GetSection("DownstreamApi"))
+            services.AddDownstreamWebApiService(Configuration);
 #endif
 #if (GenerateGraph)
-                        .AddMicrosoftGraph(Configuration.GetSection("DownstreamApi"))
-#endif
-                        .AddInMemoryTokenCaches();
-#else
-                .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));
+            services.AddMicrosoftGraph(scopes, Configuration.GetValue<string>("CalledApi:CalledApiUrl"));
 #endif
 #elif (IndividualB2CAuth)
 #if (GenerateApi)
-            var initialScopes = Configuration.GetValue<string>("DownstreamApi:Scopes")?.Split(' ');
-
+            string[] scopes = Configuration.GetValue<string>("CalledApi:CalledApiScopes")?.Split(' ');
 #endif
-            services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
 #if (GenerateApi)
-                .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAdB2C"))
-                    .EnableTokenAcquisitionToCallDownstreamApi(initialScopes)
-                        .AddDownstreamWebApi("DownstreamApi", Configuration.GetSection("DownstreamApi"))
-                        .AddInMemoryTokenCaches();
+            services.AddMicrosoftWebAppAuthentication(Configuration, "AzureAdB2C")
+                .AddMicrosoftWebAppCallsWebApi(Configuration, scopes, "AzureAdB2C")
+                .AddInMemoryTokenCaches();
+
+            services.AddDownstreamWebApiService(Configuration);
 #else
-                .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAdB2C"));
+            services.AddMicrosoftWebAppAuthentication(Configuration, "AzureAdB2C");
 #endif
 #endif
 #if (OrganizationalAuth || IndividualB2CAuth)
@@ -125,7 +122,6 @@ namespace BlazorServerWeb_CSharp
 #endif
 #if (IndividualLocalAuth)
             services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
-            services.AddDatabaseDeveloperPageExceptionFilter();
 #endif
             services.AddSingleton<WeatherForecastService>();
         }
@@ -137,7 +133,7 @@ namespace BlazorServerWeb_CSharp
             {
                 app.UseDeveloperExceptionPage();
 #if (IndividualLocalAuth)
-                app.UseMigrationsEndPoint();
+                app.UseDatabaseErrorPage();
 #endif
             }
             else

@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Runtime.Versioning;
 using System.Xml.Linq;
 
 namespace Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel
@@ -11,7 +10,6 @@ namespace Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.Configurat
     /// A class that can deserialize an <see cref="XElement"/> that represents the serialized version
     /// of an <see cref="CngCbcAuthenticatedEncryptorDescriptor"/>.
     /// </summary>
-    [SupportedOSPlatform("windows")]
     public sealed class CngCbcAuthenticatedEncryptorDescriptorDeserializer : IAuthenticatedEncryptorDescriptorDeserializer
     {
         /// <summary>

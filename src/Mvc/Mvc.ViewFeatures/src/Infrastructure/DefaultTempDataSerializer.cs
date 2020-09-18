@@ -83,8 +83,7 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures.Infrastructure
 
         private static object DeserializeArray(in JsonElement arrayElement)
         {
-            int arrayLength = arrayElement.GetArrayLength();
-            if (arrayLength == 0)
+            if (arrayElement.GetArrayLength() == 0)
             {
                 // We have to infer the type of the array by inspecting it's elements.
                 // If there's nothing to inspect, return a null value since we do not know
@@ -94,7 +93,7 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures.Infrastructure
 
             if (arrayElement[0].ValueKind == JsonValueKind.String)
             {
-                var array = new List<string>(arrayLength);
+                var array = new List<string>();
 
                 foreach (var item in arrayElement.EnumerateArray())
                 {
@@ -105,7 +104,7 @@ namespace Microsoft.AspNetCore.Mvc.ViewFeatures.Infrastructure
             }
             else if (arrayElement[0].ValueKind == JsonValueKind.Number)
             {
-                var array = new List<int>(arrayLength);
+                var array = new List<int>();
 
                 foreach (var item in arrayElement.EnumerateArray())
                 {

@@ -131,12 +131,15 @@
         {
           "condition": "(!GenerateApi)",
             "exclude": [
+              "Services/DownstreamWebApi.cs",
               "Pages/CallWebApi.razor"
             ]
         },
         {
           "condition": "(!GenerateGraph)",
           "exclude": [
+            "Services/MicrosoftGraphServiceExtensions.cs",
+            "Services/TokenAcquisitionCredentialProvider.cs",
             "Shared/NavMenu.CallsMicrosoftGraph.razor",
             "Pages/ShowProfile.razor"
             ]

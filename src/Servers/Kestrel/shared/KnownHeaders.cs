@@ -21,6 +21,10 @@ namespace CodeGenerator
         {
             var requestPrimaryHeaders = new[]
             {
+                ":authority",
+                ":method",
+                ":path",
+                ":scheme",
                 "Accept",
                 "Connection",
                 "Host",
@@ -212,7 +216,7 @@ namespace CodeGenerator
         static string AppendSwitch(IEnumerable<IGrouping<int, KnownHeader>> values) =>
              $@"switch (name.Length)
             {{{Each(values, byLength => $@"
-                case {byLength.Key}:{AppendSwitchSection(byLength.Key, byLength.OrderBy(h => h, KnownHeaderComparer.Instance).ToList())}
+                case {byLength.Key}:{AppendSwitchSection(byLength.Key, byLength.OrderBy(h => (h.PrimaryHeader ? "_" : "") + h.Name))}
                     break;")}
             }}";
 
@@ -284,7 +288,7 @@ namespace CodeGenerator
             }
         }
 
-        static string AppendSwitchSection(int length, IList<KnownHeader> values)
+        static string AppendSwitchSection(int length, IOrderedEnumerable<KnownHeader> values)
         {
             var useVarForFirstTerm = values.Count() > 1 && values.Select(h => h.FirstNameIgnoreCaseSegment()).Distinct().Count() == 1;
             var firstTermVarExpression = values.Select(h => h.FirstNameIgnoreCaseSegment()).FirstOrDefault();
@@ -325,13 +329,8 @@ namespace CodeGenerator
                 }
             }
 
-            // Group headers together that have the same ignore equal case equals check for the first term.
-            // There will probably only be more than one item in a group for Content-Encoding, Content-Language, Content-Location.
-            var groups = values.GroupBy(header => header.EqualIgnoreCaseBytesFirstTerm())
-                .OrderBy(g => g.First(), KnownHeaderComparer.Instance)
-                .ToList();
-
-            return start + $@"{Each(groups, (byFirstTerm, i) => $@"{(byFirstTerm.Count() == 1 ? $@"{Each(byFirstTerm, header => $@"
+            var groups = values.GroupBy(header => header.EqualIgnoreCaseBytesFirstTerm());
+            return start + $@"{Each(groups,  (byFirstTerm, i) => $@"{(byFirstTerm.Count() == 1 ? $@"{Each(byFirstTerm, header => $@"
                     {(i > 0 ? "else " : "")}if ({header.EqualIgnoreCaseBytes(firstTermVar)})
                     {{{GenerateIfBody(header)}
                     }}")}" : $@"
@@ -343,7 +342,6 @@ namespace CodeGenerator
                     }}")}")}";
         }
 
-        [DebuggerDisplay("{Name}")]
         public class KnownHeader
         {
             public string Name { get; set; }
@@ -656,7 +654,7 @@ namespace CodeGenerator
             var responseTrailers = ResponseTrailers;
 
             var allHeaderNames = RequestHeaders.Concat(ResponseHeaders).Concat(ResponseTrailers)
-                .Select(h => h.Identifier).Distinct().OrderBy(n => n, StringComparer.InvariantCulture).ToArray();
+                .Select(h => h.Identifier).Distinct().OrderBy(n => n).ToArray();
 
             var loops = new[]
             {
@@ -1176,6 +1174,13 @@ $@"        private void Clear(long bitsToClear)
 ")}}}";
         }
 
+        private class HPackGroup
+        {
+            public int[] HPackStaticTableIndexes { get; set; }
+            public KnownHeader Header { get; set; }
+            public string Name { get; set; }
+        }
+
         private static IEnumerable<HPackGroup> GroupHPack(KnownHeader[] headers)
         {
             var staticHeaders = new (int Index, HeaderField HeaderField)[H2StaticTable.Count];
@@ -1195,34 +1200,6 @@ $@"        private void Clear(long bitsToClear)
             }).Where(g => g.Header != null).ToList();
 
             return groupedHeaders;
-        }
-
-        private class HPackGroup
-        {
-            public int[] HPackStaticTableIndexes { get; set; }
-            public KnownHeader Header { get; set; }
-            public string Name { get; set; }
-        }
-
-        private class KnownHeaderComparer : IComparer<KnownHeader>
-        {
-            public static readonly KnownHeaderComparer Instance = new KnownHeaderComparer();
-
-            public int Compare(KnownHeader x, KnownHeader y)
-            {
-                // Primary headers appear first
-                if (x.PrimaryHeader && !y.PrimaryHeader)
-                {
-                    return -1;
-                }
-                if (y.PrimaryHeader && !x.PrimaryHeader)
-                {
-                    return 1;
-                }
-
-                // Then alphabetical
-                return StringComparer.InvariantCulture.Compare(x.Name, y.Name);
-            }
         }
     }
 }

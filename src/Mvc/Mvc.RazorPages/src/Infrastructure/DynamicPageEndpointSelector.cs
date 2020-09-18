@@ -1,4 +1,4 @@
-// Copyright (c) .NET Foundation. All rights reserved.
+﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -14,7 +14,14 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
         private readonly EndpointDataSource _dataSource;
         private readonly DataSourceDependentCache<ActionSelectionTable<Endpoint>> _cache;
 
-        public DynamicPageEndpointSelector(EndpointDataSource dataSource)
+        public DynamicPageEndpointSelector(PageActionEndpointDataSource dataSource)
+            : this((EndpointDataSource)dataSource)
+        {
+        }
+
+        // Exposed for tests. We need to accept a more specific type in the constructor for DI
+        // to work.
+        protected DynamicPageEndpointSelector(EndpointDataSource dataSource)
         {
             if (dataSource == null)
             {

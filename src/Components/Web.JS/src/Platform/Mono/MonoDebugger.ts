@@ -3,7 +3,6 @@ import { WebAssemblyResourceLoader } from '../WebAssemblyResourceLoader';
 const currentBrowserIsChrome = (window as any).chrome
   && navigator.userAgent.indexOf('Edge') < 0; // Edge pretends to be Chrome
 
-
 let hasReferencedPdbs = false;
 
 export function hasDebuggingEnabled() {

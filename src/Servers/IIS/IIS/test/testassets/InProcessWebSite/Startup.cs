@@ -28,28 +28,26 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using Xunit;
+using HttpFeatures = Microsoft.AspNetCore.Http.Features;
 
 namespace TestSite
 {
     public partial class Startup
     {
         public static bool StartupHookCalled;
-        private IHttpContextAccessor _httpContextAccessor;
 
-        public void Configure(IApplicationBuilder app, IHttpContextAccessor httpContextAccessor)
+        public void Configure(IApplicationBuilder app)
         {
             if (Environment.GetEnvironmentVariable("ENABLE_HTTPS_REDIRECTION") != null)
             {
                 app.UseHttpsRedirection();
             }
             TestStartup.Register(app, this);
-            _httpContextAccessor = httpContextAccessor;
         }
 
         public void ConfigureServices(IServiceCollection serviceCollection)
         {
             serviceCollection.AddResponseCompression();
-            serviceCollection.AddHttpContextAccessor();
         }
 #if FORWARDCOMPAT
         private async Task ContentRootPath(HttpContext ctx) => await ctx.Response.WriteAsync(ctx.RequestServices.GetService<Microsoft.AspNetCore.Hosting.IHostingEnvironment>().ContentRootPath);
@@ -469,27 +467,11 @@ namespace TestSite
 
         private async Task ReadRequestBody(HttpContext ctx)
         {
-#if !FORWARDCOMPAT
-            Assert.True(ctx.Request.CanHaveBody());
-#endif
             var readBuffer = new byte[1];
             var result = await ctx.Request.Body.ReadAsync(readBuffer, 0, 1);
             while (result != 0)
             {
                 result = await ctx.Request.Body.ReadAsync(readBuffer, 0, 1);
-            }
-        }
-
-        private async Task ReadRequestBodyLarger(HttpContext ctx)
-        {
-#if !FORWARDCOMPAT
-            Assert.True(ctx.Request.CanHaveBody());
-#endif
-            var readBuffer = new byte[4096];
-            var result = await ctx.Request.Body.ReadAsync(readBuffer, 0, 4096);
-            while (result != 0)
-            {
-                result = await ctx.Request.Body.ReadAsync(readBuffer, 0, 4096);
             }
         }
 
@@ -520,9 +502,6 @@ namespace TestSite
 
         private async Task ReadFullBody(HttpContext ctx)
         {
-#if !FORWARDCOMPAT
-            Assert.True(ctx.Request.CanHaveBody());
-#endif
             await ReadRequestBody(ctx);
             ctx.Response.ContentLength = 9;
             await ctx.Response.WriteAsync("Completed");
@@ -538,9 +517,6 @@ namespace TestSite
 
         private async Task ReadAndWriteEcho(HttpContext ctx)
         {
-#if !FORWARDCOMPAT
-            Assert.True(ctx.Request.CanHaveBody());
-#endif
             var readBuffer = new byte[4096];
             var result = await ctx.Request.Body.ReadAsync(readBuffer, 0, readBuffer.Length);
             while (result != 0)
@@ -551,9 +527,6 @@ namespace TestSite
         }
         private async Task ReadAndFlushEcho(HttpContext ctx)
         {
-#if !FORWARDCOMPAT
-            Assert.True(ctx.Request.CanHaveBody());
-#endif
             var readBuffer = new byte[4096];
             var result = await ctx.Request.Body.ReadAsync(readBuffer, 0, readBuffer.Length);
             while (result != 0)
@@ -566,9 +539,6 @@ namespace TestSite
 
         private async Task ReadAndWriteEchoLines(HttpContext ctx)
         {
-#if !FORWARDCOMPAT
-            Assert.True(ctx.Request.CanHaveBody());
-#endif
             if (ctx.Request.Headers.TryGetValue("Response-Content-Type", out var contentType))
             {
                 ctx.Response.ContentType = contentType;
@@ -598,7 +568,6 @@ namespace TestSite
 #else
             var feature = ctx.Features.Get<IHttpResponseBodyFeature>();
             feature.DisableBuffering();
-            Assert.True(ctx.Request.CanHaveBody());
 #endif
 
             if (ctx.Request.Headers.TryGetValue("Response-Content-Type", out var contentType))
@@ -623,9 +592,6 @@ namespace TestSite
 
         private async Task ReadPartialBody(HttpContext ctx)
         {
-#if !FORWARDCOMPAT
-            Assert.True(ctx.Request.CanHaveBody());
-#endif
             var data = new byte[5];
             var count = 0;
             do
@@ -676,9 +642,6 @@ namespace TestSite
 
         private async Task ReadAndWriteCopyToAsync(HttpContext ctx)
         {
-#if !FORWARDCOMPAT
-            Assert.True(ctx.Request.CanHaveBody());
-#endif
             await ctx.Request.Body.CopyToAsync(ctx.Response.Body);
         }
 
@@ -1337,10 +1300,6 @@ namespace TestSite
                 var feature = httpContext.Features.Get<IHttpResetFeature>();
                 Assert.NotNull(feature);
 
-#if !FORWARDCOMPAT
-                Assert.True(httpContext.Request.CanHaveBody());
-#endif
-
                 var read = await httpContext.Request.Body.ReadAsync(new byte[10], 0, 10);
                 Assert.Equal(10, read);
 
@@ -1356,187 +1315,9 @@ namespace TestSite
             }
         }
 
-        public Task Goaway(HttpContext httpContext)
-        {
-            httpContext.Response.Headers["Connection"] = "close";
-            return Task.CompletedTask;
-        }
-
-        private TaskCompletionSource _completeAsync = new TaskCompletionSource();
-
-        public async Task CompleteAsync(HttpContext httpContext)
-        {
-            await httpContext.Response.CompleteAsync();
-            await _completeAsync.Task;
-        }
-
-        public Task CompleteAsync_Completed(HttpContext httpContext)
-        {
-            _completeAsync.TrySetResult();
-            return Task.CompletedTask;
-        }
-
         public async Task Reset_DuringRequestBody_Resets_Complete(HttpContext httpContext)
         {
             await _resetDuringRequestBodyResetsCts.Task;
-        }
-
-        private TaskCompletionSource<object> _onCompletedHttpContext = new TaskCompletionSource<object>();
-        public async Task OnCompletedHttpContext(HttpContext context)
-        {
-            // This shouldn't block the response or the server from shutting down.
-            context.Response.OnCompleted(async () =>
-            {
-                var context = _httpContextAccessor.HttpContext;
-
-                await Task.Delay(500);
-                // Access all fields of the connection after final flush.
-                try
-                {
-                    _ = context.Connection.RemoteIpAddress;
-                    _ = context.Connection.LocalIpAddress;
-                    _ = context.Connection.Id;
-                    _ = context.Connection.ClientCertificate;
-                    _ = context.Connection.LocalPort;
-                    _ = context.Connection.RemotePort;
-
-                    _ = context.Request.ContentLength;
-                    _ = context.Request.Headers;
-                    _ = context.Request.Query;
-                    _ = context.Request.Body;
-                    _ = context.Request.ContentType;
-
-                    _ = context.Response.StatusCode;
-                    _ = context.Response.Body;
-                    _ = context.Response.Headers;
-                    _ = context.Response.ContentType;
-                }
-                catch (Exception ex)
-                {
-                    _onCompletedHttpContext.TrySetResult(ex);
-                }
-
-                _onCompletedHttpContext.TrySetResult(null);
-            });
-
-            await context.Response.WriteAsync("SlowOnCompleted");
-        }
-
-        public async Task OnCompletedHttpContext_Completed(HttpContext httpContext)
-        {
-            await _onCompletedHttpContext.Task;
-        }
-
-        private TaskCompletionSource<object> _responseTrailers_CompleteAsyncNoBody_TrailersSent = new TaskCompletionSource<object>();
-        public async Task ResponseTrailers_CompleteAsyncNoBody_TrailersSent(HttpContext httpContext)
-        {
-            httpContext.Response.AppendTrailer("trailername", "TrailerValue");
-            await httpContext.Response.CompleteAsync();
-            await _responseTrailers_CompleteAsyncNoBody_TrailersSent.Task;
-        }
-
-        public Task ResponseTrailers_CompleteAsyncNoBody_TrailersSent_Completed(HttpContext httpContext)
-        {
-            _responseTrailers_CompleteAsyncNoBody_TrailersSent.TrySetResult(null);
-            return Task.CompletedTask;
-        }
-
-        private TaskCompletionSource<object> _responseTrailers_CompleteAsyncWithBody_TrailersSent = new TaskCompletionSource<object>();
-        public async Task ResponseTrailers_CompleteAsyncWithBody_TrailersSent(HttpContext httpContext)
-        {
-            await httpContext.Response.WriteAsync("Hello World");
-            httpContext.Response.AppendTrailer("TrailerName", "Trailer Value");
-            await httpContext.Response.CompleteAsync();
-            await _responseTrailers_CompleteAsyncWithBody_TrailersSent.Task;
-        }
-
-        public Task ResponseTrailers_CompleteAsyncWithBody_TrailersSent_Completed(HttpContext httpContext)
-        {
-            _responseTrailers_CompleteAsyncWithBody_TrailersSent.TrySetResult(null);
-            return Task.CompletedTask;
-        }
-
-        public async Task Reset_AfterCompleteAsync_NoReset(HttpContext httpContext)
-        {
-            Assert.Equal("HTTP/2", httpContext.Request.Protocol);
-            var feature = httpContext.Features.Get<IHttpResetFeature>();
-            Assert.NotNull(feature);
-            await httpContext.Response.WriteAsync("Hello World");
-            await httpContext.Response.CompleteAsync();
-            // The request and response are fully complete, the reset doesn't get sent.
-            feature.Reset(1111);
-        }
-
-        public async Task Reset_CompleteAsyncDuringRequestBody_Resets(HttpContext httpContext)
-        {
-            Assert.Equal("HTTP/2", httpContext.Request.Protocol);
-            var feature = httpContext.Features.Get<IHttpResetFeature>();
-            Assert.NotNull(feature);
-
-            var read = await httpContext.Request.Body.ReadAsync(new byte[10], 0, 10);
-            Assert.Equal(10, read);
-
-            var readTask = httpContext.Request.Body.ReadAsync(new byte[10], 0, 10);
-            await httpContext.Response.CompleteAsync();
-            feature.Reset((int)0); // GRPC does this
-            await Assert.ThrowsAsync<IOException>(() => readTask);
-        }
-
-        public Task Http2_MethodsRequestWithoutData_Success(HttpContext httpContext)
-        {
-            Assert.Equal("HTTP/2", httpContext.Request.Protocol);
-#if !FORWARDCOMPAT
-            Assert.False(httpContext.Request.CanHaveBody());
-#endif
-            Assert.Null(httpContext.Request.ContentLength);
-            Assert.False(httpContext.Request.Headers.ContainsKey(HeaderNames.TransferEncoding));
-            return Task.CompletedTask;
-        }
-
-        public Task Http2_RequestWithDataAndContentLength_Success(HttpContext httpContext)
-        {
-            Assert.Equal("HTTP/2", httpContext.Request.Protocol);
-#if !FORWARDCOMPAT
-            Assert.True(httpContext.Request.CanHaveBody());
-#endif
-            Assert.Equal(11, httpContext.Request.ContentLength);
-            Assert.False(httpContext.Request.Headers.ContainsKey(HeaderNames.TransferEncoding));
-            return httpContext.Request.Body.CopyToAsync(httpContext.Response.Body);
-        }
-
-        public Task Http2_RequestWithDataAndNoContentLength_Success(HttpContext httpContext)
-        {
-            Assert.Equal("HTTP/2", httpContext.Request.Protocol);
-#if !FORWARDCOMPAT
-            Assert.True(httpContext.Request.CanHaveBody());
-#endif
-            Assert.Null(httpContext.Request.ContentLength);
-            // The client didn't send this header, Http.Sys added it for back compat with HTTP/1.1.
-            Assert.Equal("chunked", httpContext.Request.Headers[HeaderNames.TransferEncoding]);
-            return httpContext.Request.Body.CopyToAsync(httpContext.Response.Body);
-        }
-
-        public Task Http2_ResponseWithData_Success(HttpContext httpContext)
-        {
-            Assert.Equal("HTTP/2", httpContext.Request.Protocol);
-            return httpContext.Response.WriteAsync("Hello World");
-        }
-
-        public Task IncreaseRequestLimit(HttpContext httpContext)
-        {
-            var maxRequestBodySizeFeature = httpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
-            maxRequestBodySizeFeature.MaxRequestBodySize = 2;
-            return Task.CompletedTask;
-        }
-
-        public Task OnCompletedThrows(HttpContext httpContext)
-        {
-            httpContext.Response.OnCompleted(() =>
-            {
-                throw new Exception();
-            });
-
-            return Task.CompletedTask;
         }
 
         internal static readonly HashSet<(string, StringValues, StringValues)> NullTrailers = new HashSet<(string, StringValues, StringValues)>()
@@ -1576,5 +1357,5 @@ namespace TestSite
             HeaderNames.ContentEncoding, HeaderNames.ContentType, HeaderNames.ContentRange, HeaderNames.Trailer
         };
 #endif
-        }
     }
+}

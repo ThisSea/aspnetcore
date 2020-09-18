@@ -211,6 +211,19 @@
             "Server/Controllers/OidcConfigurationController.cs",
             "Server/Models/ApplicationUser.cs"
           ]
+        },
+        {
+          "condition": "(Hosted && !GenerateApi)",
+            "exclude": [
+              "Server/Services/DownstreamWebApi.cs"
+            ]
+        },
+        {
+          "condition": "(Hosted &&!GenerateGraph)",
+          "exclude": [
+             "Server/Services/MicrosoftGraphServiceExtensions.cs",
+             "Server/Services/TokenAcquisitionCredentialProvider.cs"
+          ]
         }
       ]
     }
@@ -288,7 +301,7 @@
     "SignUpSignInPolicyId": {
       "type": "parameter",
       "datatype": "string",
-      "defaultValue": "b2c_1_susi",
+      "defaultValue": "",
       "replaces": "MySignUpSignInPolicyId",
       "description": "The sign-in and sign-up policy ID for this project (use with IndividualB2C auth)."
     },
@@ -327,7 +340,7 @@
       "type": "parameter",
       "datatype": "string",
       "replaces": "api-scope",
-      "defaultValue": "access_as_user",
+      "defaultValue": "user_impersonation",
       "description": "The API scope the client needs to request to provision an access token. (use with IndividualB2C, SingleOrg)."
     },
     "TenantId": {
@@ -457,7 +470,7 @@
         "type": "parameter",
         "datatype": "string",
         "replaces": "[WebApiUrl]",
-        "defaultValue": "https://graph.microsoft.com/v1.0",
+        "defaultValue" : "https://graph.microsoft.com/v1.0/me",
         "description": "URL of the API to call from the web app. This option only applies if --auth SingleOrg, --auth MultiOrg or --auth IndividualB2C without and ASP.NET Core host is specified."
     },
     "CallsMicrosoftGraph": {
@@ -474,7 +487,7 @@
     },
     "GenerateApi": {
         "type": "computed",
-        "value": "(( (IndividualB2CAuth && !Hosted) || OrganizationalAuth) && (CalledApiUrl != \"https://graph.microsoft.com/v1.0\" || CalledApiScopes != \"user.read\"))"
+        "value": "(( (IndividualB2CAuth && !Hosted) || OrganizationalAuth) && (CalledApiUrl != \"https://graph.microsoft.com/v1.0/me\" || CalledApiScopes != \"user.read\"))"
     },
     "GenerateGraph": {
         "type": "computed",

@@ -131,7 +131,7 @@ namespace Microsoft.AspNetCore.Authentication.Certificate
             var certificateIsValid = chain.Build(clientCertificate);
             if (!certificateIsValid)
             {
-                var chainErrors = new List<string>(chain.ChainStatus.Length);
+                var chainErrors = new List<string>();
                 foreach (var validationFailure in chain.ChainStatus)
                 {
                     chainErrors.Add($"{validationFailure.Status} {validationFailure.StatusInformation}");

@@ -27,8 +27,4 @@ IF NOT EXIST "%DOTNET_ROOT%\dotnet.exe" (
     exit /b 1
 )
 
-IF "%VSINSTALLDIR%" == "" (
-    start "" "%sln%"
-) else (
-    "%VSINSTALLDIR%\Common7\IDE\devenv.com" "%sln%"
-)
+start "" "%sln%"

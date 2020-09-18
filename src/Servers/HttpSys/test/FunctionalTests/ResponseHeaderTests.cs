@@ -49,10 +49,8 @@ namespace Microsoft.AspNetCore.Server.HttpSys
                 return Task.FromResult(0);
             }))
             {
-
-#pragma warning disable SYSLIB0014 // HttpClient would merge the headers no matter what
+                // HttpClient would merge the headers no matter what
                 WebRequest request = WebRequest.Create(address);
-#pragma warning restore SYSLIB0014
                 HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync();
                 Assert.Equal(4, response.Headers.Count);
                 Assert.Null(response.Headers["Transfer-Encoding"]);
@@ -75,9 +73,8 @@ namespace Microsoft.AspNetCore.Server.HttpSys
                 return Task.FromResult(0);
             }))
             {
-#pragma warning disable SYSLIB0014 // HttpClient would merge the headers no matter what 
+                // HttpClient would merge the headers no matter what
                 WebRequest request = WebRequest.Create(address);
-#pragma warning restore SYSLIB0014
                 HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync();
                 Assert.Equal(4, response.Headers.Count);
                 Assert.Null(response.Headers["Transfer-Encoding"]);
@@ -100,9 +97,8 @@ namespace Microsoft.AspNetCore.Server.HttpSys
                 return Task.FromResult(0);
             }))
             {
-#pragma warning disable SYSLIB0014 // HttpClient would merge the headers no matter what 
+                // HttpClient would merge the headers no matter what
                 WebRequest request = WebRequest.Create(address);
-#pragma warning restore SYSLIB0014
                 HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync();
                 Assert.Equal(4, response.Headers.Count);
                 Assert.Null(response.Headers["Transfer-Encoding"]);

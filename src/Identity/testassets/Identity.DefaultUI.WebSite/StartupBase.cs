@@ -49,11 +49,9 @@ namespace Identity.DefaultUI.WebSite
             services.AddDefaultIdentity<TUser>()
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<TContext>();
-
+                
             services.AddMvc();
             services.AddSingleton<IFileVersionProvider, FileVersionProvider>();
-
-            services.AddDatabaseDeveloperPageExceptionFilter();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -61,11 +59,11 @@ namespace Identity.DefaultUI.WebSite
         {
             // This prevents running out of file watchers on some linux machines
             DisableFilePolling(env);
-
+        
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseMigrationsEndPoint();
+                app.UseDatabaseErrorPage();
             }
             else
             {

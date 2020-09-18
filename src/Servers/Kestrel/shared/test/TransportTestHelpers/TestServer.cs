@@ -101,13 +101,6 @@ namespace Microsoft.AspNetCore.Server.Kestrel.FunctionalTests
                         .UseSetting(WebHostDefaults.ShutdownTimeoutKey, TestConstants.DefaultTimeout.TotalSeconds.ToString())
                         .Configure(app => { app.Run(_app); });
                 })
-                .ConfigureServices(services =>
-                {
-                    services.Configure<HostOptions>(option =>
-                    {
-                        option.ShutdownTimeout = TestConstants.DefaultTimeout;
-                    });
-                })
                 .Build();
 
             _host.Start();

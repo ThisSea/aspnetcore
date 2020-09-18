@@ -45,6 +45,11 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2
             _readResult = default;
         }
 
+        public override void AdvanceTo(SequencePosition consumed)
+        {
+            AdvanceTo(consumed, consumed);
+        }
+
         public override void AdvanceTo(SequencePosition consumed, SequencePosition examined)
         {
             var newlyExaminedBytes = TrackConsumedAndExaminedBytes(_readResult, consumed, examined);
@@ -105,14 +110,8 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2
 
         public override void Complete(Exception exception)
         {
-            _context.ReportApplicationError(exception);
             _context.RequestBodyPipe.Reader.Complete();
-        }
-
-        public override ValueTask CompleteAsync(Exception exception)
-        {
             _context.ReportApplicationError(exception);
-            return _context.RequestBodyPipe.Reader.CompleteAsync();
         }
 
         public override void CancelPendingRead()
@@ -120,16 +119,16 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2
             _context.RequestBodyPipe.Reader.CancelPendingRead();
         }
 
-        protected override ValueTask OnStopAsync()
+        protected override Task OnStopAsync()
         {
             if (!_context.HasStartedConsumingRequestBody)
             {
-                return default;
+                return Task.CompletedTask;
             }
 
             _context.RequestBodyPipe.Reader.Complete();
 
-            return default;
+            return Task.CompletedTask;
         }
     }
 }

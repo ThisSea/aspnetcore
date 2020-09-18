@@ -63,6 +63,7 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding.Binders
             try
             {
                 var value = valueProviderResult.FirstValue;
+                var culture = valueProviderResult.Culture;
 
                 object model;
                 if (string.IsNullOrWhiteSpace(value))
@@ -72,7 +73,7 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding.Binders
                 }
                 else if (type == typeof(float))
                 {
-                    model = float.Parse(value, _supportedStyles, valueProviderResult.Culture);
+                    model = float.Parse(value, _supportedStyles, culture);
                 }
                 else
                 {

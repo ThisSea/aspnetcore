@@ -2,13 +2,11 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -74,10 +72,9 @@ namespace Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore
 
                 if (db != null)
                 {
-                    var dbName = db.GetType().FullName;
                     try
                     {
-                        _logger.ApplyingMigrations(dbName);
+                        _logger.ApplyingMigrations(db.GetType().FullName);
 
                         await db.Database.MigrateAsync();
 
@@ -85,13 +82,13 @@ namespace Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore
                         context.Response.Headers.Add("Pragma", new[] { "no-cache" });
                         context.Response.Headers.Add("Cache-Control", new[] { "no-cache,no-store" });
 
-                        _logger.MigrationsApplied(dbName);
+                        _logger.MigrationsApplied(db.GetType().FullName);
                     }
                     catch (Exception ex)
                     {
-                        var message = Strings.FormatMigrationsEndPointMiddleware_Exception(dbName) + ex;
+                        var message = Strings.FormatMigrationsEndPointMiddleware_Exception(db.GetType().FullName) + ex;
 
-                        _logger.MigrationsEndPointMiddlewareException(dbName, ex);
+                        _logger.MigrationsEndPointMiddlewareException(db.GetType().FullName, ex);
 
                         throw new InvalidOperationException(message, ex);
                     }
@@ -117,24 +114,31 @@ namespace Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore
                 return null;
             }
 
-            // Look for DbContext classes registered in the service provider
-            var registeredContexts = context.RequestServices.GetServices<DbContextOptions>()
-                .Select(o => o.ContextType);
+            var contextType = Type.GetType(contextTypeName);
 
-            if (!registeredContexts.Any(c => string.Equals(contextTypeName, c.AssemblyQualifiedName)))
+            if (contextType == null)
             {
-                var message = Strings.FormatMigrationsEndPointMiddleware_ContextNotRegistered(contextTypeName);
+                var message = Strings.FormatMigrationsEndPointMiddleware_InvalidContextType(contextTypeName);
 
-                logger.ContextNotRegistered(contextTypeName);
+                logger.InvalidContextType(contextTypeName);
 
                 await WriteErrorToResponse(context.Response, message);
 
                 return null;
             }
 
-            var contextType = Type.GetType(contextTypeName);
-
             var db = (DbContext)context.RequestServices.GetService(contextType);
+
+            if (db == null)
+            {
+                var message = Strings.FormatMigrationsEndPointMiddleware_ContextNotRegistered(contextType.FullName);
+
+                logger.ContextNotRegistered(contextType.FullName);
+
+                await WriteErrorToResponse(context.Response, message);
+
+                return null;
+            }
 
             return db;
         }

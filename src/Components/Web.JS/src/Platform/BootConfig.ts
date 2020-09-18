@@ -26,7 +26,6 @@ export interface BootJsonData {
   readonly linkerEnabled: boolean;
   readonly cacheBootResources: boolean;
   readonly config: string[];
-  readonly icuDataMode: ICUDataMode;
 }
 
 export interface ResourceGroups {
@@ -38,9 +37,3 @@ export interface ResourceGroups {
 }
 
 export type ResourceList = { [name: string]: string };
-
-export enum ICUDataMode {
-  Sharded,
-  All,
-  Invariant
-}

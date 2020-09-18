@@ -10,6 +10,7 @@ using System.Threading;
 using Microsoft.AspNetCore.Razor.Tools;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
+using Microsoft.Extensions.CommandLineUtils;
 
 namespace Microsoft.AspNetCore.Razor.Tasks
 {
@@ -18,7 +19,6 @@ namespace Microsoft.AspNetCore.Razor.Tasks
         // From https://github.com/dotnet/corefx/blob/29cd6a0b0ac2993cee23ebaf36ca3d4bce6dd75f/src/System.IO.Pipes/ref/System.IO.Pipes.cs#L93.
         // Using the enum value directly as this option is not available in netstandard.
         private const PipeOptions PipeOptionCurrentUserOnly = (PipeOptions)536870912;
-        private string _dotnetPath;
 
         private CancellationTokenSource _razorServerCts;
 
@@ -40,7 +40,7 @@ namespace Microsoft.AspNetCore.Razor.Tasks
 
         public string PipeName { get; set; }
 
-        protected override string ToolName => Path.GetDirectoryName(DotNetPath);
+        protected override string ToolName => "dotnet";
 
         // If we're debugging then make all of the stdout gets logged in MSBuild
         protected override MessageImportance StandardOutputLoggingImportance => DebugTool ? MessageImportance.High : base.StandardOutputLoggingImportance;
@@ -49,25 +49,17 @@ namespace Microsoft.AspNetCore.Razor.Tasks
 
         internal abstract string Command { get; }
 
-        protected override string GenerateFullPathToTool() => DotNetPath;
-
-        private string DotNetPath
+        protected override string GenerateFullPathToTool()
         {
-            get
+#if NETSTANDARD2_0
+            if (!string.IsNullOrEmpty(DotNetMuxer.MuxerPath))
             {
-                if (!string.IsNullOrEmpty(_dotnetPath))
-                {
-                    return _dotnetPath;
-                }
-
-                _dotnetPath = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH");
-                if (string.IsNullOrEmpty(_dotnetPath))
-                {
-                    throw new InvalidOperationException("DOTNET_HOST_PATH is not set");
-                }
-
-                return _dotnetPath;
+                return DotNetMuxer.MuxerPath;
             }
+#endif
+
+            // use PATH to find dotnet
+            return ToolExe;
         }
 
         protected override string GenerateCommandLineCommands()

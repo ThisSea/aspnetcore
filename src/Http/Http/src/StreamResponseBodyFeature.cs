@@ -71,11 +71,10 @@ namespace Microsoft.AspNetCore.Http
         }
 
         /// <summary>
-        /// Opts out of write buffering for the response.
+        /// Not supported.
         /// </summary>
         public virtual void DisableBuffering()
         {
-            PriorFeature?.DisableBuffering();
         }
 
         /// <summary>

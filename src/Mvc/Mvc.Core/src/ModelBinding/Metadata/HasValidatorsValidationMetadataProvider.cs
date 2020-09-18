@@ -1,4 +1,4 @@
-// Copyright (c) .NET Foundation. All rights reserved.
+﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -40,23 +40,7 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding.Validation
                 if (provider.HasValidators(context.Key.ModelType, context.ValidationMetadata.ValidatorMetadata))
                 {
                     context.ValidationMetadata.HasValidators = true;
-
-                    if (context.Key.MetadataKind == ModelMetadataKind.Property)
-                    {
-                        // For properties, additionally determine that if there's validators defined exclusively
-                        // from property attributes. This is later used to produce a error for record types
-                        // where a record type property that is bound as a parameter defines validation attributes.
-
-                        if (!(context.PropertyAttributes is IList<object> propertyAttributes))
-                        {
-                            propertyAttributes = context.PropertyAttributes.ToList();
-                        }
-
-                        if (provider.HasValidators(typeof(object), propertyAttributes))
-                        {
-                            context.ValidationMetadata.PropertyHasValidators = true;
-                        }
-                    }
+                    return;
                 }
             }
 

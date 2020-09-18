@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
+using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http3.QPack;
 using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure;
 using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure.PipeWriterHelpers;
 
@@ -298,17 +299,17 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http3
             }
         }
 
-        public ValueTask CompleteAsync()
+        public void Complete()
         {
             lock (_writeLock)
             {
                 if (_completed)
                 {
-                    return default;
+                    return;
                 }
 
                 _completed = true;
-                return _outputWriter.CompleteAsync();
+                _outputWriter.Complete();
             }
         }
 
@@ -324,13 +325,7 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http3
                 _aborted = true;
                 _connectionContext.Abort(error);
 
-                if (_completed)
-                {
-                    return;
-                }
-
-                _completed = true;
-                _outputWriter.Complete();
+                Complete();
             }
         }
 

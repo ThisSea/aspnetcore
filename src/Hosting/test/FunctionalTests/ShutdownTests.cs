@@ -73,14 +73,14 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
                 {
                     await deployer.DeployAsync();
 
-                    var startedTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-                    var completedTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                    var started = new ManualResetEventSlim();
+                    var completed = new ManualResetEventSlim();
                     var output = string.Empty;
                     deployer.HostProcess.OutputDataReceived += (sender, args) =>
                     {
                         if (!string.IsNullOrEmpty(args.Data) && args.Data.StartsWith(StartedMessage))
                         {
-                            startedTcs.TrySetResult();
+                            started.Set();
                             output += args.Data.Substring(StartedMessage.Length) + '\n';
                         }
                         else
@@ -90,30 +90,26 @@ namespace Microsoft.AspNetCore.Hosting.FunctionalTests
 
                         if (output.Contains(CompletionMessage))
                         {
-                            completedTcs.TrySetResult();
+                            completed.Set();
                         }
                     };
 
-                    try
+                    started.Wait(50000);
+
+                    if (!started.IsSet)
                     {
-                        await startedTcs.Task.TimeoutAfter(TimeSpan.FromMinutes(1));
-                    }
-                    catch (TimeoutException ex)
-                    {
-                        throw new InvalidOperationException("Timeout while waiting for host process to output started message.", ex);
+                        throw new InvalidOperationException("Application did not start successfully");
                     }
 
                     SendSIGINT(deployer.HostProcess.Id);
 
                     WaitForExitOrKill(deployer.HostProcess);
 
-                    try
+                    completed.Wait(50000);
+
+                    if (!started.IsSet)
                     {
-                        await completedTcs.Task.TimeoutAfter(TimeSpan.FromMinutes(1));
-                    }
-                    catch (TimeoutException ex)
-                    {
-                        throw new InvalidOperationException($"Timeout while waiting for host process to output completion message. The received output is: {output}", ex);
+                        throw new InvalidOperationException($"Application did not write the expected output. The received output is: {output}");
                     }
 
                     output = output.Trim('\n');

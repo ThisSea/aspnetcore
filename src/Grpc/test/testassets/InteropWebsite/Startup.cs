@@ -22,7 +22,6 @@ using Grpc.Testing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Net.Http.Headers;
 
 namespace InteropTestsWebsite
 {
@@ -45,8 +44,6 @@ namespace InteropTestsWebsite
 
                 var runtimeVersion = typeof(object).GetTypeInfo().Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "Unknown";
                 Console.WriteLine($"NetCoreAppVersion: {runtimeVersion}");
-                var aspNetCoreVersion = typeof(HeaderNames).GetTypeInfo().Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "Unknown";
-                Console.WriteLine($"AspNetCoreAppVersion: {aspNetCoreVersion}");
             });
 
             app.UseRouting();

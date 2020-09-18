@@ -1,13 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <Project>
-  <PropertyGroup>
-    <_IsMicrosoftNETCoreApp20OrOlder>false</_IsMicrosoftNETCoreApp20OrOlder>
-    <_IsMicrosoftNETCoreApp20OrOlder Condition=" '$(TargetFrameworkIdentifier)' == '.NETCoreApp' AND
-      $([MSBuild]::VersionLessThanOrEquals('$(TargetFrameworkVersion)', '2.0')) ">true</_IsMicrosoftNETCoreApp20OrOlder>
-  </PropertyGroup>
   <PropertyGroup Condition=" '$(OpenApiGenerateDocuments)' == '' ">
     <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>
-    <OpenApiGenerateDocuments Condition=" $(_IsMicrosoftNETCoreApp20OrOlder) " />
+    <OpenApiGenerateDocuments
+        Condition=" '$(TargetFrameworkIdentifier)' == '.NETCoreApp' AND '$(TargetFrameworkVersion.TrimStart(&quot;vV&quot;))' &lt; '2.1' " />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(OpenApiGenerateDocumentsOnBuild)' == '' ">
     <OpenApiGenerateDocumentsOnBuild>$(OpenApiGenerateDocuments)</OpenApiGenerateDocumentsOnBuild>
@@ -26,7 +22,7 @@
         Text="OpenAPI document generation is disabled. Add '&lt;OpenApiGenerateDocuments>true&lt;/OpenApiGenerateDocuments>' to the project." />
     <!-- E.g. project set $(OpenApiGenerateDocuments) to 'true' but TFM is not supported. -->
     <Error
-        Condition=" $(_IsMicrosoftNETCoreApp20OrOlder) "
+        Condition=" '$(TargetFrameworkIdentifier)' == '.NETCoreApp' AND '$(TargetFrameworkVersion.TrimStart(&quot;vV&quot;))' &lt; '2.1' "
         Text="OpenAPI document generation is not supported when targeting netcoreapp2.0 or earlier. Disable the feature or move to a later target framework." />
     <!-- E.g. project set $(OpenApiGenerateDocumentsOnBuild) to 'false' but did not invoke GenerateOpenApiDocuments. -->
     <Error Condition=" !Exists('$(_OpenApiDocumentsCache)' )"
@@ -47,7 +43,7 @@
         Text="OpenAPI document generation is disabled. Add '&lt;OpenApiGenerateDocuments>true&lt;/OpenApiGenerateDocuments>' to the project." />
     <!-- E.g. project sets $(OpenApiGenerateDocuments) to 'true' but TFM is not supported. -->
     <Error
-        Condition=" $(_IsMicrosoftNETCoreApp20OrOlder) "
+        Condition=" '$(TargetFrameworkIdentifier)' == '.NETCoreApp' AND '$(TargetFrameworkVersion.TrimStart(&quot;vV&quot;))' &lt; '2.1' "
         Text="OpenAPI document generation is not supported when targeting netcoreapp2.0 or earlier. Disable the feature or move to a later target framework." />
 
     <PropertyGroup>

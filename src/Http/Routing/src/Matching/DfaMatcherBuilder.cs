@@ -49,7 +49,7 @@ namespace Microsoft.AspNetCore.Routing.Matching
             }
             else
             {
-                UseCorrectCatchAllBehavior = true; // default to correct behavior
+                UseCorrectCatchAllBehavior = false; // default to bugged behavior
             }
 
             var (nodeBuilderPolicies, endpointComparerPolicies, endpointSelectorPolicies) = ExtractPolicies(policies.OrderBy(p => p.Order));

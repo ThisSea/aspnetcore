@@ -143,7 +143,7 @@ namespace Microsoft.AspNetCore.Razor.Tools
         /// </summary>
         private void WaitForAnyCompletion(CancellationToken cancellationToken)
         {
-            var all = new List<Task>(_connections.Count + 3);
+            var all = new List<Task>();
             all.AddRange(_connections);
             all.Add(_timeoutTask);
             all.Add(_listenTask);

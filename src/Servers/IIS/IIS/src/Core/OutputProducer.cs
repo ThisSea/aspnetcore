@@ -40,7 +40,7 @@ namespace Microsoft.AspNetCore.Server.IIS.Core
             return FlushAsync(_pipe.Writer, cancellationToken);
         }
 
-        public void Complete()
+        public void Dispose()
         {
             lock (_contextLock)
             {

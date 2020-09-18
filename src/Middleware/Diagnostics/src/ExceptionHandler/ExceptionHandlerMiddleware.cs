@@ -113,22 +113,18 @@ namespace Microsoft.AspNetCore.Diagnostics
                 };
                 context.Features.Set<IExceptionHandlerFeature>(exceptionHandlerFeature);
                 context.Features.Set<IExceptionHandlerPathFeature>(exceptionHandlerFeature);
-                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                context.Response.StatusCode = 500;
                 context.Response.OnStarting(_clearCacheHeadersDelegate, context.Response);
 
                 await _options.ExceptionHandler(context);
 
-                if (context.Response.StatusCode != StatusCodes.Status404NotFound)
+                if (_diagnosticListener.IsEnabled() && _diagnosticListener.IsEnabled("Microsoft.AspNetCore.Diagnostics.HandledException"))
                 {
-                    if (_diagnosticListener.IsEnabled() && _diagnosticListener.IsEnabled("Microsoft.AspNetCore.Diagnostics.HandledException"))
-                    {
-                        _diagnosticListener.Write("Microsoft.AspNetCore.Diagnostics.HandledException", new { httpContext = context, exception = edi.SourceException });
-                    }
-
-                    return;
+                    _diagnosticListener.Write("Microsoft.AspNetCore.Diagnostics.HandledException", new { httpContext = context, exception = edi.SourceException });
                 }
 
-                _logger.ErrorHandlerNotFound();
+                // TODO: Optional re-throw? We'll re-throw the original exception by default if the error handler throws.
+                return;
             }
             catch (Exception ex2)
             {

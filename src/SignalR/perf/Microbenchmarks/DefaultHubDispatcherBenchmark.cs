@@ -47,7 +47,6 @@ namespace Microsoft.AspNetCore.SignalR.Microbenchmarks
             var contextOptions = new HubConnectionContextOptions()
             {
                 KeepAliveInterval = TimeSpan.Zero,
-                StreamBufferCapacity = 10,
             };
             _connectionContext = new NoErrorHubConnectionContext(connection, contextOptions, NullLoggerFactory.Instance);
 

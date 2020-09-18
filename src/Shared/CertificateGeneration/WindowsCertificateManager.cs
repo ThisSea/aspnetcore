@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Microsoft.AspNetCore.Certificates.Generation
 {
-    [SupportedOSPlatform("windows")]
     internal class WindowsCertificateManager : CertificateManager
     {
         private const int UserCancelledErrorCode = 1223;

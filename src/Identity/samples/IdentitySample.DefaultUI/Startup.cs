@@ -49,8 +49,6 @@ namespace IdentitySample.DefaultUI
             services.AddDefaultIdentity<ApplicationUser>(o => o.SignIn.RequireConfirmedAccount = true)
                  .AddRoles<IdentityRole>()
                  .AddEntityFrameworkStores<ApplicationDbContext>();
-
-            services.AddDatabaseDeveloperPageExceptionFilter();
         }
 
 
@@ -60,7 +58,7 @@ namespace IdentitySample.DefaultUI
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseMigrationsEndPoint();
+                app.UseDatabaseErrorPage();
             }
             else
             {

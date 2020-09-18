@@ -131,8 +131,6 @@ namespace System.Buffers
                 {
                     SetAllBlocksReturned();
                 }
-
-                _pool.Dispose();
             }
         }
 

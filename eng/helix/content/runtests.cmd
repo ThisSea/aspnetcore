@@ -1,50 +1,38 @@
 @echo off
-SETLOCAL
+REM Need delayed expansion !PATH! so parens in the path don't mess up the parens for the if statements that use parens for blocks
+setlocal enabledelayedexpansion
 
 REM Use '$' as a variable name prefix to avoid MSBuild variable collisions with these variables
 set $target=%1
 set $sdkVersion=%2
 set $runtimeVersion=%3
-set $aspRuntimeVersion=%4
-set $queue=%5
-set $arch=%6
-set $quarantined=%7
-set $ef=%8
-set $helixTimeout=%9
+set $queue=%4
+set $arch=%5
+set $quarantined=%6
+set $ef=%7
+set $aspnetruntime=%8
+set $aspnetref=%9
 REM Batch only supports up to 9 arguments using the %# syntax, need to shift to get more
 shift
-set $feedCred=%9
+set $helixTimeout=%9
 
-set DOTNET_HOME=%CD%\sdk%random%
+set DOTNET_HOME=%HELIX_CORRELATION_PAYLOAD%\sdk
 set DOTNET_ROOT=%DOTNET_HOME%\%$arch%
 set DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 set DOTNET_MULTILEVEL_LOOKUP=0
-set DOTNET_CLI_HOME=%CD%\home%random%
+set DOTNET_CLI_HOME=%HELIX_CORRELATION_PAYLOAD%\home
 
-set "PATH=%DOTNET_ROOT%;%PATH%;%HELIX_CORRELATION_PAYLOAD%\node\bin"
-echo Set path to: "%PATH%"
-echo.
-
-echo "InstallDotNet %DOTNET_ROOT% %$sdkVersion% %$arch% '' $true '' '' $true"
-powershell.exe -noLogo -NoProfile -ExecutionPolicy unrestricted -command ". eng\common\tools.ps1; InstallDotNet %DOTNET_ROOT% %$sdkVersion% %$arch% '' $true '' '' $true"
-echo.
-
-IF [%$feedCred%] == [] (
-    echo "InstallDotNet %DOTNET_ROOT% %$runtimeVersion% %$arch% dotnet $true '' '' $true"
-    powershell.exe -noLogo -NoProfile -ExecutionPolicy unrestricted -command ". eng\common\tools.ps1; InstallDotNet %DOTNET_ROOT% %$runtimeVersion% %$arch% dotnet $true '' '' $true"
-) else (
-    echo "InstallDotNet %DOTNET_ROOT% %$runtimeVersion% %$arch% dotnet $true https://dotnetclimsrc.blob.core.windows.net/dotnet ... $true"
-    powershell.exe -noLogo -NoProfile -ExecutionPolicy unrestricted -command ". eng\common\tools.ps1; InstallDotNet %DOTNET_ROOT% %$runtimeVersion% %$arch% dotnet $true https://dotnetclimsrc.blob.core.windows.net/dotnet %$feedCred% $true"
-)
-echo.
+set PATH=%DOTNET_ROOT%;!PATH!;%HELIX_CORRELATION_PAYLOAD%\node\bin
+echo Set path to: %PATH%
+echo "Invoking InstallDotNet.ps1 %$arch% %$sdkVersion% %$runtimeVersion% %DOTNET_ROOT%"
+powershell.exe -NoProfile -ExecutionPolicy unrestricted -file InstallDotNet.ps1 %$arch% %$sdkVersion% %$runtimeVersion% %DOTNET_ROOT%
 
 set exit_code=0
+echo "Restore: dotnet restore RunTests\RunTests.csproj --source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet5/nuget/v3/index.json --source https://api.nuget.org/v3/index.json --ignore-failed-sources..."
+dotnet restore RunTests\RunTests.csproj --source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet5/nuget/v3/index.json --source https://api.nuget.org/v3/index.json --ignore-failed-sources
 
-echo "Restore: dotnet restore RunTests\RunTests.csproj --ignore-failed-sources"
-dotnet restore RunTests\RunTests.csproj --ignore-failed-sources
-
-echo "Running tests: dotnet run --no-restore --project RunTests\RunTests.csproj -- --target %$target% --runtime %$aspRuntimeVersion% --queue %$queue% --arch %$arch% --quarantined %$quarantined% --ef %$ef% --helixTimeout %$helixTimeout%"
-dotnet run --no-restore --project RunTests\RunTests.csproj -- --target %$target% --runtime %$aspRuntimeVersion% --queue %$queue% --arch %$arch% --quarantined %$quarantined% --ef %$ef% --helixTimeout %$helixTimeout%
+echo "Running tests: dotnet run --project RunTests\RunTests.csproj -- --target %$target% --sdk %$sdkVersion% --runtime %$runtimeVersion% --queue %$queue% --arch %$arch% --quarantined %$quarantined% --ef %$ef% --aspnetruntime %$aspnetruntime% --aspnetref %$aspnetref% --helixTimeout %$helixTimeout%..."
+dotnet run --project RunTests\RunTests.csproj -- --target %$target% --sdk %$sdkVersion% --runtime %$runtimeVersion% --queue %$queue% --arch %$arch% --quarantined %$quarantined% --ef %$ef% --aspnetruntime %$aspnetruntime% --aspnetref %$aspnetref% --helixTimeout %$helixTimeout%
 if errorlevel neq 0 (
     set exit_code=%errorlevel%
 )

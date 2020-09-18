@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -146,7 +145,6 @@ namespace Microsoft.JSInterop
                 ref reader);
             Assert.True(task.IsCompleted);
             var poco = task.Result;
-            Debug.Assert(poco != null);
             Assert.Equal(10, poco.Id);
             Assert.Equal("Test", poco.Name);
         }
@@ -169,7 +167,6 @@ namespace Microsoft.JSInterop
                 ref reader);
             Assert.True(task.IsCompleted);
             var poco = task.Result;
-            Debug.Assert(poco != null);
             Assert.Equal(10, poco.Id);
             Assert.Equal("Test", poco.Name);
         }
@@ -380,7 +377,7 @@ namespace Microsoft.JSInterop
                 });
             }
 
-            protected override void BeginInvokeJS(long asyncHandle, string identifier, string? argsJson, JSCallResultType resultType, long targetInstanceId)
+            protected override void BeginInvokeJS(long asyncHandle, string identifier, string? argsJson)
             {
                 BeginInvokeCalls.Add(new BeginInvokeAsyncArgs
                 {

@@ -18,7 +18,6 @@ using Microsoft.Net.Http.Headers;
 namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http
 {
     internal partial class HttpProtocol : IHttpRequestFeature,
-                                          IHttpRequestBodyDetectionFeature,
                                           IHttpResponseFeature,
                                           IHttpResponseBodyFeature,
                                           IRequestBodyPipeFeature,
@@ -121,8 +120,6 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http
                 return RequestBodyPipeReader;
             }
         }
-
-        bool IHttpRequestBodyDetectionFeature.CanHaveBody => _bodyControl.CanHaveBody;
 
         bool IHttpRequestTrailersFeature.Available => RequestTrailersAvailable;
 

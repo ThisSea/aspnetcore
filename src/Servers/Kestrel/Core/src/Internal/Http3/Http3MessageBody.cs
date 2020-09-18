@@ -20,7 +20,6 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http3
         {
             _context = context;
         }
-
         protected override void OnReadStarting()
         {
             // Note ContentLength or MaxRequestBodySize may be null
@@ -30,9 +29,18 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http3
             }
         }
 
+        protected override void OnReadStarted()
+        {
+        }
+
         public static MessageBody For(Http3Stream context)
         {
             return new Http3MessageBody(context);
+        }
+
+        public override void AdvanceTo(SequencePosition consumed)
+        {
+            AdvanceTo(consumed, consumed);
         }
 
         public override void AdvanceTo(SequencePosition consumed, SequencePosition examined)
@@ -92,14 +100,8 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http3
 
         public override void Complete(Exception exception)
         {
-            _context.ReportApplicationError(exception);
             _context.RequestBodyPipe.Reader.Complete();
-        }
-
-        public override ValueTask CompleteAsync(Exception exception)
-        {
             _context.ReportApplicationError(exception);
-            return _context.RequestBodyPipe.Reader.CompleteAsync();
         }
 
         public override void CancelPendingRead()
@@ -107,16 +109,16 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http3
             _context.RequestBodyPipe.Reader.CancelPendingRead();
         }
 
-        protected override ValueTask OnStopAsync()
+        protected override Task OnStopAsync()
         {
             if (!_context.HasStartedConsumingRequestBody)
             {
-                return default;
+                return Task.CompletedTask;
             }
 
             _context.RequestBodyPipe.Reader.Complete();
 
-            return default;
+            return Task.CompletedTask;
         }
     }
 }

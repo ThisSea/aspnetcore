@@ -2,10 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Net.Http.Headers;
 using Xunit;
 
@@ -13,56 +9,11 @@ namespace Microsoft.AspNetCore.Http.Tests
 {
     public class ResponseCookiesTest
     {
-        private IFeatureCollection MakeFeatures(IHeaderDictionary headers)
-        {
-            var responseFeature = new HttpResponseFeature()
-            {
-                Headers = headers
-            };
-            var features = new FeatureCollection();
-            features.Set<IHttpResponseFeature>(responseFeature);
-            return features;
-        }
-
-        [Fact]
-        public void AppendSameSiteNoneWithoutSecureLogsWarning()
-        {
-            var headers = new HeaderDictionary();
-            var features = MakeFeatures(headers);
-            var services = new ServiceCollection();
-
-            var sink = new TestSink(TestSink.EnableWithTypeName<ResponseCookies>);
-            var loggerFactory = new TestLoggerFactory(sink, enabled: true);
-            services.AddLogging();
-            services.AddSingleton<ILoggerFactory>(loggerFactory);
-
-            features.Set<IServiceProvidersFeature>(new ServiceProvidersFeature() { RequestServices = services.BuildServiceProvider() });
-
-            var cookies = new ResponseCookies(features);
-            var testCookie = "TestCookie";
-
-            cookies.Append(testCookie, "value", new CookieOptions()
-            {
-                SameSite = SameSiteMode.None,
-            });
-
-            var cookieHeaderValues = headers[HeaderNames.SetCookie];
-            Assert.Single(cookieHeaderValues);
-            Assert.StartsWith(testCookie, cookieHeaderValues[0]);
-            Assert.Contains("path=/", cookieHeaderValues[0]);
-            Assert.Contains("samesite=none", cookieHeaderValues[0]);
-            Assert.DoesNotContain("secure", cookieHeaderValues[0]);
-
-            var writeContext = Assert.Single(sink.Writes);
-            Assert.Equal("The cookie 'TestCookie' has set 'SameSite=None' and must also set 'Secure'.", writeContext.Message);
-        }
-
         [Fact]
         public void DeleteCookieShouldSetDefaultPath()
         {
             var headers = new HeaderDictionary();
-            var features = MakeFeatures(headers);
-            var cookies = new ResponseCookies(features);
+            var cookies = new ResponseCookies(headers);
             var testCookie = "TestCookie";
 
             cookies.Delete(testCookie);
@@ -78,8 +29,7 @@ namespace Microsoft.AspNetCore.Http.Tests
         public void DeleteCookieWithCookieOptionsShouldKeepPropertiesOfCookieOptions()
         {
             var headers = new HeaderDictionary();
-            var features = MakeFeatures(headers);
-            var cookies = new ResponseCookies(features);
+            var cookies = new ResponseCookies(headers);
             var testCookie = "TestCookie";
             var time = new DateTimeOffset(2000, 1, 1, 1, 1, 1, 1, TimeSpan.Zero);
             var options = new CookieOptions
@@ -108,8 +58,7 @@ namespace Microsoft.AspNetCore.Http.Tests
         public void NoParamsDeleteRemovesCookieCreatedByAdd()
         {
             var headers = new HeaderDictionary();
-            var features = MakeFeatures(headers);
-            var cookies = new ResponseCookies(features);
+            var cookies = new ResponseCookies(headers);
             var testCookie = "TestCookie";
 
             cookies.Append(testCookie, testCookie);
@@ -126,8 +75,7 @@ namespace Microsoft.AspNetCore.Http.Tests
         public void ProvidesMaxAgeWithCookieOptionsArgumentExpectMaxAgeToBeSet()
         {
             var headers = new HeaderDictionary();
-            var features = MakeFeatures(headers);
-            var cookies = new ResponseCookies(features);
+            var cookies = new ResponseCookies(headers);
             var cookieOptions = new CookieOptions();
             var maxAgeTime = TimeSpan.FromHours(1);
             cookieOptions.MaxAge = TimeSpan.FromHours(1);
@@ -148,8 +96,7 @@ namespace Microsoft.AspNetCore.Http.Tests
         public void EscapesValuesBeforeSettingCookie(string value, string expected)
         {
             var headers = new HeaderDictionary();
-            var features = MakeFeatures(headers);
-            var cookies = new ResponseCookies(features);
+            var cookies = new ResponseCookies(headers);
 
             cookies.Append("key", value);
 
@@ -164,8 +111,7 @@ namespace Microsoft.AspNetCore.Http.Tests
         public void InvalidKeysThrow(string key)
         {
             var headers = new HeaderDictionary();
-            var features = MakeFeatures(headers);
-            var cookies = new ResponseCookies(features);
+            var cookies = new ResponseCookies(headers);
 
             Assert.Throws<ArgumentException>(() => cookies.Append(key, "1"));
         }
@@ -178,8 +124,7 @@ namespace Microsoft.AspNetCore.Http.Tests
         public void AppContextSwitchEscapesKeysAndValuesBeforeSettingCookie(string key, string value, string expected)
         {
             var headers = new HeaderDictionary();
-            var features = MakeFeatures(headers);
-            var cookies = new ResponseCookies(features);
+            var cookies = new ResponseCookies(headers);
             cookies._enableCookieNameEncoding = true;
 
             cookies.Append(key, value);

@@ -1,7 +1,5 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
-using System.Collections.Generic;
-using System.Net.Security;
 
 namespace System.Net.Quic.Implementations.MsQuic.Internal
 {
@@ -23,7 +21,7 @@ namespace System.Net.Quic.Implementations.MsQuic.Internal
         {
             if (!_opened)
             {
-                OpenSession(options.ClientAuthenticationOptions!.ApplicationProtocols!,
+                OpenSession(options.ClientAuthenticationOptions!.ApplicationProtocols![0].Protocol.ToArray(),
                     (ushort)options.MaxBidirectionalStreams,
                     (ushort)options.MaxUnidirectionalStreams);
             }
@@ -38,7 +36,7 @@ namespace System.Net.Quic.Implementations.MsQuic.Internal
             return connectionPtr;
         }
 
-        private void OpenSession(List<SslApplicationProtocol> alpn, ushort bidirectionalStreamCount, ushort undirectionalStreamCount)
+        private void OpenSession(byte[] alpn, ushort bidirectionalStreamCount, ushort undirectionalStreamCount)
         {
             _opened = true;
             _nativeObjPtr = MsQuicApi.Api.SessionOpen(alpn);
@@ -51,7 +49,7 @@ namespace System.Net.Quic.Implementations.MsQuic.Internal
         {
             if (!_opened)
             {
-                OpenSession(options.ServerAuthenticationOptions!.ApplicationProtocols!,
+                OpenSession(options.ServerAuthenticationOptions!.ApplicationProtocols![0].Protocol.ToArray(),
                                     (ushort)options.MaxBidirectionalStreams,
                                     (ushort)options.MaxUnidirectionalStreams);
             }

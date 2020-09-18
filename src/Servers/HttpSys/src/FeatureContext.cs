@@ -23,7 +23,6 @@ namespace Microsoft.AspNetCore.Server.HttpSys
 {
     internal class FeatureContext :
         IHttpRequestFeature,
-        IHttpRequestBodyDetectionFeature,
         IHttpConnectionFeature,
         IHttpResponseFeature,
         IHttpResponseBodyFeature,
@@ -38,8 +37,7 @@ namespace Microsoft.AspNetCore.Server.HttpSys
         IHttpBodyControlFeature,
         IHttpSysRequestInfoFeature,
         IHttpResponseTrailersFeature,
-        IHttpResetFeature,
-        IHttpSysRequestDelegationFeature
+        IHttpResetFeature
     {
         private RequestContext _requestContext;
         private IFeatureCollection _features;
@@ -212,8 +210,6 @@ namespace Microsoft.AspNetCore.Server.HttpSys
             get { return _scheme; }
             set { _scheme = value; }
         }
-
-        bool IHttpRequestBodyDetectionFeature.CanHaveBody => Request.HasEntityBody;
 
         IPAddress IHttpConnectionFeature.LocalIpAddress
         {
@@ -595,8 +591,6 @@ namespace Microsoft.AspNetCore.Server.HttpSys
             set => _responseTrailers = value;
         }
 
-        public bool CanDelegate => Request.CanDelegate;
-
         internal async Task OnResponseStart()
         {
             if (_responseStarted)
@@ -716,12 +710,6 @@ namespace Microsoft.AspNetCore.Server.HttpSys
             {
                 await actionPair.Item1(actionPair.Item2);
             }
-        }
-
-        public void DelegateRequest(DelegationRule destination)
-        {
-            _requestContext.Delegate(destination);
-            _responseStarted = true;
         }
     }
 }

@@ -106,11 +106,6 @@ namespace Microsoft.AspNetCore.Server.HttpSys
             FlushInternal(endOfRequest: false);
         }
 
-        public void MarkDelegated()
-        {
-            _skipWrites = true;
-        }
-
         // We never expect endOfRequest and data at the same time
         private unsafe void FlushInternal(bool endOfRequest, ArraySegment<byte> data = new ArraySegment<byte>())
         {

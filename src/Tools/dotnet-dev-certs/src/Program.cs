@@ -98,9 +98,12 @@ namespace Microsoft.AspNetCore.DeveloperCertificates.Tools
                         CommandOptionType.SingleValue);
 
                     CommandOption trust = null;
-                    trust = c.Option("-t|--trust",
-                        "Trust the certificate on the current platform",
-                        CommandOptionType.NoValue);
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                    {
+                        trust = c.Option("-t|--trust",
+                            "Trust the certificate on the current platform",
+                            CommandOptionType.NoValue);
+                    }
 
                     var verbose = c.Option("-v|--verbose",
                         "Display more debug information.",
@@ -289,32 +292,24 @@ namespace Microsoft.AspNetCore.DeveloperCertificates.Tools
 
             if (trust != null && trust.HasValue())
             {
-                if(!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                var store = RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? StoreName.My : StoreName.Root;
+                var trustedCertificates = certificateManager.ListCertificates(store, StoreLocation.CurrentUser, isValid: true);
+                if (!certificates.Any(c => certificateManager.IsTrusted(c)))
                 {
-                    var store = RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? StoreName.My : StoreName.Root;
-                    var trustedCertificates = certificateManager.ListCertificates(store, StoreLocation.CurrentUser, isValid: true);
-                    if (!certificates.Any(c => certificateManager.IsTrusted(c)))
-                    {
-                        reporter.Output($@"The following certificates were found, but none of them is trusted:
-    {string.Join(Environment.NewLine, certificates.Select(c => $"{c.Subject} - {c.Thumbprint}"))}");
-                        return ErrorCertificateNotTrusted;
-                    }
-                    else
-                    {
-                        reporter.Output("A trusted certificate was found.");
-                    }
+                    reporter.Output($@"The following certificates were found, but none of them is trusted:
+{string.Join(Environment.NewLine, certificates.Select(c => $"{c.Subject} - {c.Thumbprint}"))}");
+                    return ErrorCertificateNotTrusted;
                 }
                 else
                 {
-                    reporter.Warn("Checking the HTTPS development certificate trust status was requested. Checking whether the certificate is trusted or not is not supported on Linux distributions." +
-                        "For instructions on how to manually validate the certificate is trusted on your Linux distribution, go to https://aka.ms/dev-certs-trust");
+                    reporter.Output("A trusted certificate was found.");
                 }
             }
 
             return Success;
         }
 
-        private static int EnsureHttpsCertificate(CommandOption exportPath, CommandOption password, CommandOption noPassword, CommandOption trust, CommandOption exportFormat, IReporter reporter)
+        private static int EnsureHttpsCertificate(CommandOption exportPath, CommandOption password, CommandOption noPassword, CommandOption trust, CommandOption keyFormat, IReporter reporter)
         {
             var now = DateTimeOffset.Now;
             var manager = CertificateManager.Instance;
@@ -337,34 +332,25 @@ namespace Microsoft.AspNetCore.DeveloperCertificates.Tools
                 }
             }
 
-            if (trust?.HasValue() == true)
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && trust?.HasValue() == true)
             {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                {
-                    reporter.Warn("Trusting the HTTPS development certificate was requested. If the certificate is not " +
-                        "already trusted we will run the following command:" + Environment.NewLine +
-                        "'sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain <<certificate>>'" +
-                        Environment.NewLine + "This command might prompt you for your password to install the certificate " +
-                        "on the system keychain.");
-                }
+                reporter.Warn("Trusting the HTTPS development certificate was requested. If the certificate is not " +
+                    "already trusted we will run the following command:" + Environment.NewLine +
+                    "'sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain <<certificate>>'" +
+                    Environment.NewLine + "This command might prompt you for your password to install the certificate " +
+                    "on the system keychain.");
+            }
 
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    reporter.Warn("Trusting the HTTPS development certificate was requested. A confirmation prompt will be displayed " +
-                        "if the certificate was not previously trusted. Click yes on the prompt to trust the certificate.");
-                }
-
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                {
-                    reporter.Warn("Trusting the HTTPS development certificate was requested. Trusting the certificate on Linux distributions automatically is not supported. " +
-                        "For instructions on how to manually trust the certificate on your Linux distribution, go to https://aka.ms/dev-certs-trust");
-                }
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && trust?.HasValue() == true)
+            {
+                reporter.Warn("Trusting the HTTPS development certificate was requested. A confirmation prompt will be displayed " +
+                    "if the certificate was not previously trusted. Click yes on the prompt to trust the certificate.");
             }
 
             var format = CertificateKeyExportFormat.Pfx;
-            if (exportFormat.HasValue() && !Enum.TryParse(exportFormat.Value(), ignoreCase: true, out format))
+            if (keyFormat.HasValue() && !Enum.TryParse(keyFormat.Value(), ignoreCase: true, out format))
             {
-                reporter.Error($"Unknown key format '{exportFormat.Value()}'.");
+                reporter.Error($"Unknown key format '{keyFormat.Value()}'.");
                 return InvalidKeyExportFormat;
             }
 
@@ -372,10 +358,10 @@ namespace Microsoft.AspNetCore.DeveloperCertificates.Tools
                 now,
                 now.Add(HttpsCertificateValidity),
                 exportPath.Value(),
-                trust == null ? false : trust.HasValue() && !RuntimeInformation.IsOSPlatform(OSPlatform.Linux),
+                trust == null ? false : trust.HasValue(),
                 password.HasValue() || (noPassword.HasValue() && format == CertificateKeyExportFormat.Pem),
                 password.Value(),
-                exportFormat.HasValue() ? format : CertificateKeyExportFormat.Pfx);
+                keyFormat.HasValue() ? format : CertificateKeyExportFormat.Pfx);
 
             switch (result)
             {

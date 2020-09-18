@@ -19,7 +19,6 @@ namespace Microsoft.AspNetCore.Server.IIS.FunctionalTests.InProcess
         }
 
         [ConditionalTheory]
-        [MaximumOSVersion(OperatingSystems.Windows, WindowsVersions.Win10_20H1, SkipReason = "Shutdown hangs https://github.com/dotnet/aspnetcore/issues/25107")]
         [InlineData("ConsoleErrorWrite")]
         [InlineData("ConsoleWrite")]
         public async Task CheckStdoutLoggingToPipe_DoesNotCrashProcess(string path)
@@ -38,7 +37,6 @@ namespace Microsoft.AspNetCore.Server.IIS.FunctionalTests.InProcess
         }
 
         [ConditionalTheory]
-        [MaximumOSVersion(OperatingSystems.Windows, WindowsVersions.Win10_20H1, SkipReason = "Shutdown hangs https://github.com/dotnet/aspnetcore/issues/25107")]
         [InlineData("ConsoleErrorWriteStartServer")]
         [InlineData("ConsoleWriteStartServer")]
         public async Task CheckStdoutLoggingToPipeWithFirstWrite(string path)
@@ -63,7 +61,6 @@ namespace Microsoft.AspNetCore.Server.IIS.FunctionalTests.InProcess
         }
 
         [ConditionalFact]
-        [MaximumOSVersion(OperatingSystems.Windows, WindowsVersions.Win10_20H1, SkipReason = "Shutdown hangs https://github.com/dotnet/aspnetcore/issues/25107")]
         public async Task CheckUnicodePipe()
         {
             var path = "CheckConsoleFunctions";

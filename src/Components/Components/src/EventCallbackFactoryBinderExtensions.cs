@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using static Microsoft.AspNetCore.Components.BindConverter;
 
@@ -32,7 +31,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -52,7 +50,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -72,7 +69,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -92,7 +88,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -112,7 +107,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -132,7 +126,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -152,7 +145,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -172,7 +164,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -192,7 +183,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -212,7 +202,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -232,7 +221,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -252,7 +240,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -272,7 +259,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -292,7 +278,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -312,7 +297,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -332,7 +316,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -353,7 +336,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="format"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -374,7 +356,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -395,7 +376,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="format"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -416,7 +396,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -437,7 +416,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="format"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -458,7 +436,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -479,7 +456,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="format"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder(
             this EventCallbackFactory factory,
             object receiver,
@@ -501,7 +477,6 @@ namespace Microsoft.AspNetCore.Components
         /// <param name="existingValue"></param>
         /// <param name="culture"></param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static EventCallback<ChangeEventArgs> CreateBinder<T>(
             this EventCallbackFactory factory,
             object receiver,

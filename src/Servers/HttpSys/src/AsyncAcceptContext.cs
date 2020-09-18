@@ -127,9 +127,7 @@ namespace Microsoft.AspNetCore.Server.HttpSys
                 statusCode = HttpApi.HttpReceiveHttpRequest(
                     Server.RequestQueue.Handle,
                     _nativeRequestContext.RequestId,
-                    // Small perf impact by not using HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY
-                    // if the request sends header+body in a single TCP packet 
-                    (uint)HttpApiTypes.HTTP_FLAGS.NONE,
+                    (uint)HttpApiTypes.HTTP_FLAGS.HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY,
                     _nativeRequestContext.NativeRequest,
                     _nativeRequestContext.Size,
                     &bytesTransferred,

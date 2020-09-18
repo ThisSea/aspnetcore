@@ -92,7 +92,7 @@ namespace System.Buffers
 
             public override ReadOnlySequence<byte> CreateWithContent(byte[] data)
             {
-                var segments = new List<byte[]>((data.Length * 2) + 1);
+                var segments = new List<byte[]>();
 
                 segments.Add(Array.Empty<byte>());
                 foreach (var b in data)

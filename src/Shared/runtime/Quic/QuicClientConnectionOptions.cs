@@ -24,7 +24,7 @@ namespace System.Net.Quic
         /// <summary>
         /// The endpoint to connect to.
         /// </summary>
-        public EndPoint? RemoteEndPoint { get; set; }
+        public IPEndPoint? RemoteEndPoint { get; set; }
 
         /// <summary>
         /// Limit on the number of bidirectional streams the peer connection can create

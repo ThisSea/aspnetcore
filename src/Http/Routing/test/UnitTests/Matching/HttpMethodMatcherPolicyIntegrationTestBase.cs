@@ -84,16 +84,14 @@ namespace Microsoft.AspNetCore.Routing.Matching
             Assert.Same(HttpMethodMatcherPolicy.Http405EndpointDisplayName, httpContext.GetEndpoint().DisplayName);
         }
 
-        [Theory]
-        [InlineData("GeT", "GET")]
-        [InlineData("unKNOWN", "UNKNOWN")]
-        public async Task Match_HttpMethod_CaseInsensitive(string endpointMethod, string requestMethod)
+        [Fact]
+        public async Task Match_HttpMethod_CaseInsensitive()
         {
             // Arrange
-            var endpoint = CreateEndpoint("/hello", httpMethods: new string[] { endpointMethod, });
+            var endpoint = CreateEndpoint("/hello", httpMethods: new string[] { "GeT", });
 
             var matcher = CreateMatcher(endpoint);
-            var httpContext = CreateContext("/hello", requestMethod);
+            var httpContext = CreateContext("/hello", "GET");
 
             // Act
             await matcher.MatchAsync(httpContext);
@@ -102,16 +100,14 @@ namespace Microsoft.AspNetCore.Routing.Matching
             MatcherAssert.AssertMatch(httpContext, endpoint);
         }
 
-        [Theory]
-        [InlineData("GeT", "GET")]
-        [InlineData("unKNOWN", "UNKNOWN")]
-        public async Task Match_HttpMethod_CaseInsensitive_CORS_Preflight(string endpointMethod, string requestMethod)
+        [Fact]
+        public async Task Match_HttpMethod_CaseInsensitive_CORS_Preflight()
         {
             // Arrange
-            var endpoint = CreateEndpoint("/hello", httpMethods: new string[] { endpointMethod, }, acceptCorsPreflight: true);
+            var endpoint = CreateEndpoint("/hello", httpMethods: new string[] { "GeT", }, acceptCorsPreflight: true);
 
             var matcher = CreateMatcher(endpoint);
-            var httpContext = CreateContext("/hello", requestMethod, corsPreflight: true);
+            var httpContext = CreateContext("/hello", "GET", corsPreflight: true);
 
             // Act
             await matcher.MatchAsync(httpContext);

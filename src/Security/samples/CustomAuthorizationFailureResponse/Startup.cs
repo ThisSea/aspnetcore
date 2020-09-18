@@ -2,6 +2,7 @@ using CustomAuthorizationFailureResponse.Authentication;
 using CustomAuthorizationFailureResponse.Authorization;
 using CustomAuthorizationFailureResponse.Authorization.Handlers;
 using CustomAuthorizationFailureResponse.Authorization.Requirements;
+using CustomAuthorizationFailureResponse.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -34,7 +35,7 @@ namespace CustomAuthorizationFailureResponse
             services.AddAuthorization(options => options.AddPolicy(SamplePolicyNames.CustomPolicyWithCustomForbiddenMessage, policy => policy.AddRequirements(new SampleWithCustomMessageRequirement())));
 
             services.AddTransient<IAuthorizationHandler, SampleRequirementHandler>();
-            services.AddTransient<IAuthorizationMiddlewareResultHandler, SampleAuthorizationMiddlewareResultHandler>();
+            services.Decorate<IAuthorizationMiddlewareResultHandler, SampleAuthorizationMiddlewareResultHandler>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

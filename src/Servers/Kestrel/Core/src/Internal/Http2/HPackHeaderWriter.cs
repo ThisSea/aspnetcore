@@ -151,15 +151,13 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http2
         private static bool IsSensitive(int staticTableIndex, string name)
         {
             // Set-Cookie could contain sensitive data.
-            switch (staticTableIndex)
+            if (staticTableIndex == H2StaticTable.SetCookie)
             {
-                case H2StaticTable.SetCookie:
-                case H2StaticTable.ContentDisposition:
-                    return true;
-                case -1:
-                    // Content-Disposition currently isn't a known header so a
-                    // static index probably won't be specified.
-                    return string.Equals(name, "Content-Disposition", StringComparison.OrdinalIgnoreCase);
+                return true;
+            }
+            if (string.Equals(name, "Content-Disposition", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
             }
 
             return false;

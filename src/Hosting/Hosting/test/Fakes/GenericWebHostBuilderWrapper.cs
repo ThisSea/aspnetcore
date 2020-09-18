@@ -16,7 +16,7 @@ namespace Microsoft.AspNetCore.Hosting.Tests.Fakes
 
         internal GenericWebHostBuilderWrapper(HostBuilder hostBuilder)
         {
-            _builder = new GenericWebHostBuilder(hostBuilder, new WebHostBuilderOptions());
+            _builder = new GenericWebHostBuilder(hostBuilder);
             _hostBuilder = hostBuilder;
         }
 

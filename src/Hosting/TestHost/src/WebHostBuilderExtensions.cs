@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -94,7 +93,6 @@ namespace Microsoft.AspNetCore.TestHost
             return webHostBuilder;
         }
 
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static IWebHostBuilder UseSolutionRelativeContentRoot(
             this IWebHostBuilder builder,
             string solutionRelativePath,
@@ -103,7 +101,6 @@ namespace Microsoft.AspNetCore.TestHost
             return builder.UseSolutionRelativeContentRoot(solutionRelativePath, AppContext.BaseDirectory, solutionName);
         }
 
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public static IWebHostBuilder UseSolutionRelativeContentRoot(
             this IWebHostBuilder builder,
             string solutionRelativePath,

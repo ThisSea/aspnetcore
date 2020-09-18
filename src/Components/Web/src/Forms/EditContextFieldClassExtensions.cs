@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace Microsoft.AspNetCore.Components.Forms
@@ -12,8 +13,6 @@ namespace Microsoft.AspNetCore.Components.Forms
     /// </summary>
     public static class EditContextFieldClassExtensions
     {
-        private readonly static object FieldCssClassProviderKey = new object();
-
         /// <summary>
         /// Gets a string that indicates the status of the specified field as a CSS class. This will include
         /// some combination of "modified", "valid", or "invalid", depending on the status of the field.
@@ -25,34 +24,23 @@ namespace Microsoft.AspNetCore.Components.Forms
             => FieldCssClass(editContext, FieldIdentifier.Create(accessor));
 
         /// <summary>
-        /// Gets a string that indicates the status of the specified field as a CSS class.
+        /// Gets a string that indicates the status of the specified field as a CSS class. This will include
+        /// some combination of "modified", "valid", or "invalid", depending on the status of the field.
         /// </summary>
         /// <param name="editContext">The <see cref="EditContext"/>.</param>
         /// <param name="fieldIdentifier">An identifier for the field.</param>
         /// <returns>A string that indicates the status of the field.</returns>
         public static string FieldCssClass(this EditContext editContext, in FieldIdentifier fieldIdentifier)
         {
-            var provider = editContext.Properties.TryGetValue(FieldCssClassProviderKey, out var customProvider)
-                ? (FieldCssClassProvider)customProvider
-                : FieldCssClassProvider.Instance;
-
-            return provider.GetFieldCssClass(editContext, fieldIdentifier);
-        }
-
-        /// <summary>
-        /// Associates the supplied <see cref="FieldCssClassProvider"/> with the supplied <see cref="EditContext"/>.
-        /// This customizes the field CSS class names used within the <see cref="EditContext"/>.
-        /// </summary>
-        /// <param name="editContext">The <see cref="EditContext"/>.</param>
-        /// <param name="fieldCssClassProvider">The <see cref="FieldCssClassProvider"/>.</param>
-        public static void SetFieldCssClassProvider(this EditContext editContext, FieldCssClassProvider fieldCssClassProvider)
-        {
-            if (fieldCssClassProvider is null)
+            var isValid = !editContext.GetValidationMessages(fieldIdentifier).Any();
+            if (editContext.IsModified(fieldIdentifier))
             {
-                throw new ArgumentNullException(nameof(fieldCssClassProvider));
+                return isValid ? "modified valid" : "modified invalid";
             }
-
-            editContext.Properties[FieldCssClassProviderKey] = fieldCssClassProvider;
+            else
+            {
+                return isValid ? "valid" : "invalid";
+            }
         }
     }
 }

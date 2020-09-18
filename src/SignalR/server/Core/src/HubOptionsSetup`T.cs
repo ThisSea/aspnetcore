@@ -25,7 +25,6 @@ namespace Microsoft.AspNetCore.SignalR
             options.EnableDetailedErrors = _hubOptions.EnableDetailedErrors;
             options.MaximumReceiveMessageSize = _hubOptions.MaximumReceiveMessageSize;
             options.StreamBufferCapacity = _hubOptions.StreamBufferCapacity;
-            options.MaximumParallelInvocationsPerClient = _hubOptions.MaximumParallelInvocationsPerClient;
 
             options.UserHasSetValues = true;
 

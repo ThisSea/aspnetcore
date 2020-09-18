@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -16,15 +15,15 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
 {
     internal class DynamicPageEndpointMatcherPolicy : MatcherPolicy, IEndpointSelectorPolicy
     {
-        private readonly DynamicPageEndpointSelectorCache _selectorCache;
+        private readonly DynamicPageEndpointSelector _selector;
         private readonly PageLoader _loader;
         private readonly EndpointMetadataComparer _comparer;
 
-        public DynamicPageEndpointMatcherPolicy(DynamicPageEndpointSelectorCache selectorCache, PageLoader loader, EndpointMetadataComparer comparer)
+        public DynamicPageEndpointMatcherPolicy(DynamicPageEndpointSelector selector, PageLoader loader, EndpointMetadataComparer comparer)
         {
-            if (selectorCache == null)
+            if (selector == null)
             {
-                throw new ArgumentNullException(nameof(selectorCache));
+                throw new ArgumentNullException(nameof(selector));
             }
 
             if (loader == null)
@@ -37,7 +36,7 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
                 throw new ArgumentNullException(nameof(comparer));
             }
 
-            _selectorCache = selectorCache;
+            _selector = selector;
             _loader = loader;
             _comparer = comparer;
         }
@@ -87,8 +86,6 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
                 throw new ArgumentNullException(nameof(candidates));
             }
 
-            DynamicPageEndpointSelector selector = null;
-
             // There's no real benefit here from trying to avoid the async state machine.
             // We only execute on nodes that contain a dynamic policy, and thus always have
             // to await something.
@@ -135,8 +132,7 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
                     continue;
                 }
 
-                selector = ResolveSelector(selector, endpoint);
-                var endpoints = selector.SelectEndpoints(dynamicValues);
+                var endpoints = _selector.SelectEndpoints(dynamicValues);
                 if (endpoints.Count == 0 && dynamicPageMetadata != null)
                 {
                     // Having no match for a fallback is a configuration error. We can't really check
@@ -200,15 +196,5 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
                 candidates.ExpandEndpoint(i, loadedEndpoints, _comparer);
             }
         }
-
-        private DynamicPageEndpointSelector ResolveSelector(DynamicPageEndpointSelector currentSelector, Endpoint endpoint)
-        {
-            var selector = _selectorCache.GetEndpointSelector(endpoint);
-
-            Debug.Assert(currentSelector == null || ReferenceEquals(currentSelector, selector));
-
-            return selector;
-        }
-
     }
 }

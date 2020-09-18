@@ -140,7 +140,6 @@ namespace MusicStore
                 options.Scope.Add("wl.signin");
             });
 
-            services.AddDatabaseDeveloperPageExceptionFilter();
         }
 
         public void Configure(IApplicationBuilder app)
@@ -161,7 +160,7 @@ namespace MusicStore
             // Note: Not recommended for production.
             app.UseDeveloperExceptionPage();
 
-            app.UseMigrationsEndPoint();
+            app.UseDatabaseErrorPage();
 
             // Configure Session.
             app.UseSession();

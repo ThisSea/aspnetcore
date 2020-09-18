@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Microsoft.AspNetCore.Components.Rendering;
@@ -35,7 +34,7 @@ namespace Microsoft.AspNetCore.Components.Forms
         }
 
         /// <inheritdoc />
-        protected override string FormatValueAsString(TValue? value)
+        protected override string FormatValueAsString([AllowNull] TValue value)
         {
             switch (value)
             {
@@ -49,7 +48,7 @@ namespace Microsoft.AspNetCore.Components.Forms
         }
 
         /// <inheritdoc />
-        protected override bool TryParseValueFromString(string? value, [MaybeNullWhen(false)] out TValue result, [NotNullWhen(false)] out string? validationErrorMessage)
+        protected override bool TryParseValueFromString(string? value, [MaybeNull] out TValue result, [NotNullWhen(false)] out string? validationErrorMessage)
         {
             // Unwrap nullable types. We don't have to deal with receiving empty values for nullable
             // types here, because the underlying InputBase already covers that.
@@ -71,7 +70,6 @@ namespace Microsoft.AspNetCore.Components.Forms
 
             if (success)
             {
-                Debug.Assert(result != null);
                 validationErrorMessage = null;
                 return true;
             }
@@ -82,7 +80,7 @@ namespace Microsoft.AspNetCore.Components.Forms
             }
         }
 
-        private static bool TryParseDateTime(string? value, [MaybeNullWhen(false)] out TValue result)
+        static bool TryParseDateTime(string? value, [MaybeNullWhen(false)] out TValue result)
         {
             var success = BindConverter.TryConvertToDateTime(value, CultureInfo.InvariantCulture, DateFormat, out var parsedValue);
             if (success)
@@ -97,7 +95,7 @@ namespace Microsoft.AspNetCore.Components.Forms
             }
         }
 
-        private static bool TryParseDateTimeOffset(string? value, [MaybeNullWhen(false)] out TValue result)
+        static bool TryParseDateTimeOffset(string? value, [MaybeNullWhen(false)] out TValue result)
         {
             var success = BindConverter.TryConvertToDateTimeOffset(value, CultureInfo.InvariantCulture, DateFormat, out var parsedValue);
             if (success)

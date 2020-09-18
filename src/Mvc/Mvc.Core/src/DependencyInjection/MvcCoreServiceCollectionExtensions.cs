@@ -269,11 +269,9 @@ namespace Microsoft.Extensions.DependencyInjection
             //
             // Endpoint Routing / Endpoints
             //
-            services.TryAddSingleton<ControllerActionEndpointDataSourceFactory>();
-            services.TryAddSingleton<OrderedEndpointsSequenceProviderCache>();
-            services.TryAddSingleton<ControllerActionEndpointDataSourceIdProvider>();
+            services.TryAddSingleton<ControllerActionEndpointDataSource>();
             services.TryAddSingleton<ActionEndpointFactory>();
-            services.TryAddSingleton<DynamicControllerEndpointSelectorCache>();
+            services.TryAddSingleton<DynamicControllerEndpointSelector>();
             services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, DynamicControllerEndpointMatcherPolicy>());
 
             //

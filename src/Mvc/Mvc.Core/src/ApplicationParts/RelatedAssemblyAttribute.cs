@@ -1,4 +1,4 @@
-// Copyright (c) .NET Foundation. All rights reserved.
+﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Loader;
 using Microsoft.AspNetCore.Mvc.Core;
 
 namespace Microsoft.AspNetCore.Mvc.ApplicationParts
@@ -17,6 +16,8 @@ namespace Microsoft.AspNetCore.Mvc.ApplicationParts
     [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
     public sealed class RelatedAssemblyAttribute : Attribute
     {
+        private static readonly Func<string, Assembly> AssemblyLoadFileDelegate = Assembly.LoadFile;
+
         /// <summary>
         /// Initializes a new instance of <see cref="RelatedAssemblyAttribute"/>.
         /// </summary>
@@ -49,15 +50,14 @@ namespace Microsoft.AspNetCore.Mvc.ApplicationParts
                 throw new ArgumentNullException(nameof(assembly));
             }
 
-            var loadContext = AssemblyLoadContext.GetLoadContext(assembly) ?? AssemblyLoadContext.Default;
-            return GetRelatedAssemblies(assembly, throwOnError, File.Exists, new AssemblyLoadContextWrapper(loadContext));
+            return GetRelatedAssemblies(assembly, throwOnError, File.Exists, AssemblyLoadFileDelegate);
         }
 
         internal static IReadOnlyList<Assembly> GetRelatedAssemblies(
             Assembly assembly,
             bool throwOnError,
             Func<string, bool> fileExists,
-            AssemblyLoadContextWrapper assemblyLoadContext)
+            Func<string, Assembly> loadFile)
         {
             if (assembly == null)
             {
@@ -66,7 +66,7 @@ namespace Microsoft.AspNetCore.Mvc.ApplicationParts
 
             // MVC will specifically look for related parts in the same physical directory as the assembly.
             // No-op if the assembly does not have a location.
-            if (assembly.IsDynamic)
+            if (assembly.IsDynamic || string.IsNullOrEmpty(assembly.Location))
             {
                 return Array.Empty<Assembly>();
             }
@@ -78,10 +78,8 @@ namespace Microsoft.AspNetCore.Mvc.ApplicationParts
             }
 
             var assemblyName = assembly.GetName().Name;
-            // Assembly.Location may be null for a single-file exe. In this case, attempt to look for related parts in the app's base directory
-            var assemblyDirectory = string.IsNullOrEmpty(assembly.Location) ?
-                AppContext.BaseDirectory :
-                Path.GetDirectoryName(assembly.Location);
+            var assemblyLocation = assembly.Location;
+            var assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
 
             var relatedAssemblies = new List<Assembly>();
             for (var i = 0; i < attributes.Length; i++)
@@ -93,46 +91,26 @@ namespace Microsoft.AspNetCore.Mvc.ApplicationParts
                         Resources.FormatRelatedAssemblyAttribute_AssemblyCannotReferenceSelf(nameof(RelatedAssemblyAttribute), assemblyName));
                 }
 
-                Assembly relatedAssembly;
                 var relatedAssemblyLocation = Path.Combine(assemblyDirectory, attribute.AssemblyFileName + ".dll");
-                if (fileExists(relatedAssemblyLocation))
+                if (!fileExists(relatedAssemblyLocation))
                 {
-                    relatedAssembly = assemblyLoadContext.LoadFromAssemblyPath(relatedAssemblyLocation);
-                }
-                else
-                {
-                    try
+                    if (throwOnError)
                     {
-                        var relatedAssemblyName = new AssemblyName(attribute.AssemblyFileName);
-                        relatedAssembly = assemblyLoadContext.LoadFromAssemblyName(relatedAssemblyName);
+                        throw new FileNotFoundException(
+                            Resources.FormatRelatedAssemblyAttribute_CouldNotBeFound(attribute.AssemblyFileName, assemblyName, assemblyDirectory),
+                            relatedAssemblyLocation);
                     }
-                    catch when (!throwOnError)
+                    else
                     {
-                        // Ignore assembly load failures when throwOnError = false.
                         continue;
                     }
                 }
 
+                var relatedAssembly = loadFile(relatedAssemblyLocation);
                 relatedAssemblies.Add(relatedAssembly);
             }
 
             return relatedAssemblies;
-        }
-
-        internal class AssemblyLoadContextWrapper
-        {
-            private readonly AssemblyLoadContext _loadContext;
-
-            public AssemblyLoadContextWrapper(AssemblyLoadContext loadContext)
-            {
-                _loadContext = loadContext;
-            }
-
-            public virtual Assembly LoadFromAssemblyName(AssemblyName assemblyName)
-                => _loadContext.LoadFromAssemblyName(assemblyName);
-
-            public virtual Assembly LoadFromAssemblyPath(string assemblyPath)
-                => _loadContext.LoadFromAssemblyPath(assemblyPath);
         }
     }
 }

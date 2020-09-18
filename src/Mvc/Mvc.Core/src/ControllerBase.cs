@@ -1886,29 +1886,13 @@ namespace Microsoft.AspNetCore.Mvc
             string title = null,
             string type = null)
         {
-            ProblemDetails problemDetails;
-            if (ProblemDetailsFactory == null)
-            {
-                // ProblemDetailsFactory may be null in unit testing scenarios. Improvise to make this more testable.
-                problemDetails = new ProblemDetails
-                {
-                    Detail = detail,
-                    Instance = instance,
-                    Status = statusCode ?? 500,
-                    Title = title,
-                    Type = type,
-                };
-            }
-            else
-            {
-                problemDetails = ProblemDetailsFactory.CreateProblemDetails(
-                    HttpContext,
-                    statusCode: statusCode ?? 500,
-                    title: title,
-                    type: type,
-                    detail: detail,
-                    instance: instance);
-            }
+            var problemDetails = ProblemDetailsFactory.CreateProblemDetails(
+                HttpContext,
+                statusCode: statusCode ?? 500,
+                title: title,
+                type: type,
+                detail: detail,
+                instance: instance);
 
             return new ObjectResult(problemDetails)
             {
@@ -1974,30 +1958,14 @@ namespace Microsoft.AspNetCore.Mvc
         {
             modelStateDictionary ??= ModelState;
 
-            ValidationProblemDetails validationProblem;
-            if (ProblemDetailsFactory == null)
-            {
-                // ProblemDetailsFactory may be null in unit testing scenarios. Improvise to make this more testable.
-                validationProblem = new ValidationProblemDetails(modelStateDictionary)
-                {
-                    Detail = detail,
-                    Instance = instance,
-                    Status = statusCode,
-                    Title = title,
-                    Type = type,
-                };
-            }
-            else
-            {
-                validationProblem = ProblemDetailsFactory?.CreateValidationProblemDetails(
-                    HttpContext,
-                    modelStateDictionary,
-                    statusCode: statusCode,
-                    title: title,
-                    type: type,
-                    detail: detail,
-                    instance: instance);
-            }
+            var validationProblem = ProblemDetailsFactory.CreateValidationProblemDetails(
+                HttpContext,
+                modelStateDictionary,
+                statusCode: statusCode,
+                title: title,
+                type: type,
+                detail: detail,
+                instance: instance);
 
             if (validationProblem.Status == 400)
             {

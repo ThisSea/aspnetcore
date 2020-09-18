@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,8 +24,6 @@ namespace RoutingWebSite
                 .SetCompatibilityVersion(CompatibilityVersion.Latest);
 
             services.AddTransient<Transformer>();
-            services.AddScoped<TestResponseGenerator>();
-            services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
 
             // Used by some controllers defined in this project.
             services.Configure<RouteOptions>(options => options.ConstraintMap["slugify"] = typeof(SlugifyParameterTransformer));

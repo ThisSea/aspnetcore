@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Versioning;
 using Microsoft.AspNetCore.Cryptography;
 using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel;
 using Microsoft.AspNetCore.DataProtection.Internal;
@@ -18,7 +17,6 @@ namespace Microsoft.AspNetCore.DataProtection
     /// <summary>
     /// A type which allows reading policy from the system registry.
     /// </summary>
-    [SupportedOSPlatform("windows")]
     internal sealed class RegistryPolicyResolver: IRegistryPolicyResolver
     {
         private readonly Func<RegistryKey> _getPolicyRegKey;

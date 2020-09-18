@@ -14,7 +14,6 @@ namespace Microsoft.AspNetCore.Server.IIS.Core
     internal partial class IISHttpContext
     {
         private long _consumedBytes;
-        internal bool ClientDisconnected { get; private set; }
 
         /// <summary>
         /// Reads data from the Input pipe to the user.
@@ -176,9 +175,6 @@ namespace Microsoft.AspNetCore.Server.IIS.Core
                                 SetResponseTrailers();
                             }
 
-                            // Done with response, say there is no more data after writing trailers.
-                            await AsyncIO.FlushAsync(moreData: false);
-
                             break;
                         }
 
@@ -227,17 +223,12 @@ namespace Microsoft.AspNetCore.Server.IIS.Core
                 _requestAborted = true;
             }
 
-            lock (_contextLock)
-            {
-                ClientDisconnected = clientDisconnect;
-            }
-
             if (clientDisconnect)
             {
                 Log.ConnectionDisconnect(_logger, ((IHttpConnectionFeature)this).ConnectionId);
             }
 
-            _bodyOutput.Complete();
+            _bodyOutput.Dispose();
 
             if (shouldScheduleCancellation)
             {
@@ -278,7 +269,7 @@ namespace Microsoft.AspNetCore.Server.IIS.Core
         {
             _bodyOutput.Abort(reason);
             _streams.Abort(reason);
-            NativeMethods.HttpCloseConnection(_requestNativeHandle);
+            NativeMethods.HttpCloseConnection(_pInProcessHandler);
 
             AbortIO(clientDisconnect: false);
         }

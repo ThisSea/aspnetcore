@@ -12,8 +12,8 @@ namespace Microsoft.AspNetCore.Server.IIS.Core.IO
 {
     internal partial class AsyncIOEngine : IAsyncIOEngine
     {
-        private readonly IISHttpContext _context;
-        private readonly NativeSafeHandle _handler;
+        private readonly object _contextSync;
+        private readonly IntPtr _handler;
 
         private bool _stopped;
 
@@ -24,9 +24,9 @@ namespace Microsoft.AspNetCore.Server.IIS.Core.IO
         private AsyncWriteOperation _cachedAsyncWriteOperation;
         private AsyncFlushOperation _cachedAsyncFlushOperation;
 
-        public AsyncIOEngine(IISHttpContext context, NativeSafeHandle handler)
+        public AsyncIOEngine(object contextSync, IntPtr handler)
         {
-            _context = context;
+            _contextSync = contextSync;
             _handler = handler;
         }
 
@@ -48,7 +48,7 @@ namespace Microsoft.AspNetCore.Server.IIS.Core.IO
 
         private void Run(AsyncIOOperation ioOperation)
         {
-            lock (_context._contextLock)
+            lock (_contextSync)
             {
                 if (_stopped)
                 {
@@ -89,6 +89,7 @@ namespace Microsoft.AspNetCore.Server.IIS.Core.IO
             }
         }
 
+
         public ValueTask FlushAsync(bool moreData)
         {
             var flush = GetFlushOperation();
@@ -102,7 +103,7 @@ namespace Microsoft.AspNetCore.Server.IIS.Core.IO
             AsyncIOOperation.AsyncContinuation continuation;
             AsyncIOOperation.AsyncContinuation? nextContinuation = null;
 
-            lock (_context._contextLock)
+            lock (_contextSync)
             {
                 Debug.Assert(_runningOperation != null);
 
@@ -136,17 +137,12 @@ namespace Microsoft.AspNetCore.Server.IIS.Core.IO
             nextContinuation?.Invoke();
         }
 
-        public void Complete()
+        public void Dispose()
         {
-            lock (_context._contextLock)
+            lock (_contextSync)
             {
                 _stopped = true;
-
-                // Should only call CancelIO if the client hasn't disconnected
-                if (!_context.ClientDisconnected)
-                {
-                    NativeMethods.HttpTryCancelIO(_handler);
-                }
+                NativeMethods.HttpTryCancelIO(_handler);
             }
         }
 

@@ -274,7 +274,7 @@ namespace Microsoft.AspNetCore.Authentication.JwtBearer
         
         private static string CreateErrorDescription(Exception authFailure)
         {
-            IReadOnlyCollection<Exception> exceptions;
+            IEnumerable<Exception> exceptions;
             if (authFailure is AggregateException agEx)
             {
                 exceptions = agEx.InnerExceptions;
@@ -284,7 +284,7 @@ namespace Microsoft.AspNetCore.Authentication.JwtBearer
                 exceptions = new[] { authFailure };
             }
 
-            var messages = new List<string>(exceptions.Count);
+            var messages = new List<string>();
 
             foreach (var ex in exceptions)
             {

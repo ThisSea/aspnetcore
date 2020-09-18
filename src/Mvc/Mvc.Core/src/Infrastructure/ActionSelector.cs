@@ -135,11 +135,10 @@ namespace Microsoft.AspNetCore.Mvc.Infrastructure
             RouteContext context,
             IReadOnlyList<ActionDescriptor> actions)
         {
-            var actionsCount = actions.Count;
-            var candidates = new List<ActionSelectorCandidate>(actionsCount);
+            var candidates = new List<ActionSelectorCandidate>();
 
             // Perf: Avoid allocations
-            for (var i = 0; i < actionsCount; i++)
+            for (var i = 0; i < actions.Count; i++)
             {
                 var action = actions[i];
                 var constraints = _actionConstraintCache.GetActionConstraints(context.HttpContext, action);
@@ -151,10 +150,9 @@ namespace Microsoft.AspNetCore.Mvc.Infrastructure
             List<ActionDescriptor> results = null;
             if (matches != null)
             {
-                var matchesCount = matches.Count;
-                results = new List<ActionDescriptor>(matchesCount);
+                results = new List<ActionDescriptor>(matches.Count);
                 // Perf: Avoid allocations
-                for (var i = 0; i < matchesCount; i++)
+                for (var i = 0; i < matches.Count; i++)
                 {
                     var candidate = matches[i];
                     results.Add(candidate.Action);

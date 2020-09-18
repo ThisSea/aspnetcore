@@ -123,8 +123,7 @@ namespace Microsoft.AspNetCore.Mvc.Formatters
                 throw new ArgumentNullException(nameof(encoding));
             }
 
-            var httpContext = context.HttpContext;
-            var request = httpContext.Request;
+            var request = context.HttpContext.Request;
 
             var suppressInputFormatterBuffering = _options.SuppressInputFormatterBuffering;
 
@@ -154,7 +153,7 @@ namespace Microsoft.AspNetCore.Mvc.Formatters
 
                 readStream = new FileBufferingReadStream(request.Body, memoryThreshold);
                 // Ensure the file buffer stream is always disposed at the end of a request.
-                httpContext.Response.RegisterForDispose(readStream);
+                request.HttpContext.Response.RegisterForDispose(readStream);
 
                 await readStream.DrainAsync(CancellationToken.None);
                 readStream.Seek(0L, SeekOrigin.Begin);

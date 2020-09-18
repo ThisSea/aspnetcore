@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Security.Claims;
 using System.Security.Principal;
 using System.Text.Encodings.Web;
@@ -315,7 +314,7 @@ namespace Microsoft.AspNetCore.Authentication.Negotiate
             // things like ClaimsTransformation run per request.
             var identity = _negotiateState.GetIdentity();
             ClaimsPrincipal user;
-            if (OperatingSystem.IsWindows() && identity is WindowsIdentity winIdentity)
+            if (identity is WindowsIdentity winIdentity)
             {
                 user = new WindowsPrincipal(winIdentity);
                 Response.RegisterForDispose(winIdentity);
@@ -325,37 +324,10 @@ namespace Microsoft.AspNetCore.Authentication.Negotiate
                 user = new ClaimsPrincipal(new ClaimsIdentity(identity));
             }
 
-            AuthenticatedContext authenticatedContext;
-
-            if (Options.LdapSettings.EnableLdapClaimResolution)
+            var authenticatedContext = new AuthenticatedContext(Context, Scheme, Options)
             {
-                var ldapContext = new LdapContext(Context, Scheme, Options, Options.LdapSettings)
-                {
-                    Principal = user
-                };
-
-                await Events.RetrieveLdapClaims(ldapContext);
-
-                if (ldapContext.Result != null)
-                {
-                    return ldapContext.Result;
-                }
-
-                await LdapAdapter.RetrieveClaimsAsync(ldapContext.LdapSettings, ldapContext.Principal.Identity as ClaimsIdentity, Logger);
-
-                authenticatedContext = new AuthenticatedContext(Context, Scheme, Options)
-                {
-                    Principal = ldapContext.Principal
-                };
-            }
-            else
-            {
-                authenticatedContext = new AuthenticatedContext(Context, Scheme, Options)
-                {
-                    Principal = user
-                };
-            }
-
+                Principal = user
+            };
             await Events.Authenticated(authenticatedContext);
 
             if (authenticatedContext.Result != null)

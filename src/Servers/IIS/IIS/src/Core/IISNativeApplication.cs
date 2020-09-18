@@ -8,9 +8,9 @@ namespace Microsoft.AspNetCore.Server.IIS.Core
 {
     internal class IISNativeApplication
     {
-        private readonly NativeSafeHandle _nativeApplication;
+        private readonly IntPtr _nativeApplication;
 
-        public IISNativeApplication(NativeSafeHandle nativeApplication)
+        public IISNativeApplication(IntPtr nativeApplication)
         {
             _nativeApplication = nativeApplication;
         }
@@ -48,9 +48,6 @@ namespace Microsoft.AspNetCore.Server.IIS.Core
         public void Dispose()
         {
             GC.SuppressFinalize(this);
-
-            // Don't need to await here because pinvokes should never been called after disposing the safe handle.
-            _nativeApplication.Dispose();
         }
 
         ~IISNativeApplication()

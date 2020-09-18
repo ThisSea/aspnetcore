@@ -257,7 +257,7 @@ namespace Microsoft.AspNetCore.Razor.Design.IntegrationTests
             Assert.BuildOutputContainsLine(result, $"RazorTasksPath: {expected}");
         }
 
-        [ConditionalFact(Skip = "https://github.com/dotnet/aspnetcore/issues/24427")]
+        [ConditionalFact]
         [OSSkipCondition(OperatingSystems.Linux | OperatingSystems.MacOSX)]
         [InitializeTestProject("SimpleMvc")]
         public async Task IntrospectRazorTasksDllPath_DesktopMsBuild()
@@ -274,18 +274,6 @@ namespace Microsoft.AspNetCore.Razor.Design.IntegrationTests
 
             Assert.BuildPassed(result);
             Assert.BuildOutputContainsLine(result, $"RazorTasksPath: {expected}");
-        }
-
-        [Fact]
-        [InitializeTestProject("ComponentApp")]
-        public async Task IntrospectRazorSdkWatchItems()
-        {
-            // Arrange
-            var result = await DotnetMSBuild("_IntrospectWatchItems");
-
-            Assert.BuildPassed(result);
-            Assert.BuildOutputContainsLine(result, "Watch: Index.razor");
-            Assert.BuildOutputContainsLine(result, "Watch: Index.razor.css");
         }
     }
 }

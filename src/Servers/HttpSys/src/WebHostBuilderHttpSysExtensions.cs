@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Runtime.Versioning;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Server.HttpSys;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +11,7 @@ namespace Microsoft.AspNetCore.Hosting
 {
     /// <summary>
     /// Provides extensions method to use Http.sys as the server for the web host.
-    /// </summary>
+    /// </summary>    
     public static class WebHostBuilderHttpSysExtensions
     {
         /// <summary>
@@ -24,7 +23,6 @@ namespace Microsoft.AspNetCore.Hosting
         /// <returns>
         /// A reference to the <see cref="IWebHostBuilder" /> parameter object.
         /// </returns>
-        [SupportedOSPlatform("windows")]
         public static IWebHostBuilder UseHttpSys(this IWebHostBuilder hostBuilder)
         {
             return hostBuilder.ConfigureServices(services => {
@@ -54,7 +52,6 @@ namespace Microsoft.AspNetCore.Hosting
         /// <returns>
         /// A reference to the <see cref="IWebHostBuilder" /> parameter object.
         /// </returns>
-        [SupportedOSPlatform("windows")]
         public static IWebHostBuilder UseHttpSys(this IWebHostBuilder hostBuilder, Action<HttpSysOptions> options)
         {
             return hostBuilder.UseHttpSys().ConfigureServices(services =>

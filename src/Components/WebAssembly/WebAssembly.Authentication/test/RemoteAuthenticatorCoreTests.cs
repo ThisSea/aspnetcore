@@ -488,39 +488,39 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
         public static TheoryData<UIValidator> DisplaysRightUIData { get; } = new TheoryData<UIValidator>
         {
             { new UIValidator {
-                Action = "login", SetupFakeRenderAction = (validator, remoteAuthenticator) => { remoteAuthenticator.LoggingIn = validator.FakeRender; } }
+                Action = "login", SetupAction = (validator, remoteAuthenticator) => { remoteAuthenticator.LoggingIn = validator.Render; } }
             },
             { new UIValidator {
-                Action = "login-callback", SetupFakeRenderAction = (validator, remoteAuthenticator) => { remoteAuthenticator.CompletingLoggingIn = validator.FakeRender; } }
+                Action = "login-callback", SetupAction = (validator, remoteAuthenticator) => { remoteAuthenticator.CompletingLoggingIn = validator.Render; } }
             },
             { new UIValidator {
-                Action = "login-failed", SetupFakeRenderAction = (validator, remoteAuthenticator) => { remoteAuthenticator.LogInFailed = m => builder => validator.FakeRender(builder); } }
+                Action = "login-failed", SetupAction = (validator, remoteAuthenticator) => { remoteAuthenticator.LogInFailed = m => builder => validator.Render(builder); } }
             },
             { new UIValidator {
-                Action = "profile", SetupFakeRenderAction = (validator, remoteAuthenticator) => { remoteAuthenticator.LoggingIn = validator.FakeRender; } }
+                Action = "profile", SetupAction = (validator, remoteAuthenticator) => { remoteAuthenticator.LoggingIn = validator.Render; } }
             },
             // Profile fragment overrides
             { new UIValidator {
-                Action = "profile", SetupFakeRenderAction = (validator, remoteAuthenticator) => { remoteAuthenticator.UserProfile = validator.FakeRender; } }
+                Action = "profile", SetupAction = (validator, remoteAuthenticator) => { remoteAuthenticator.UserProfile = validator.Render; } }
             },
             { new UIValidator {
-                Action = "register", SetupFakeRenderAction = (validator, remoteAuthenticator) => { remoteAuthenticator.LoggingIn = validator.FakeRender; } }
+                Action = "register", SetupAction = (validator, remoteAuthenticator) => { remoteAuthenticator.LoggingIn = validator.Render; } }
             },
             // Register fragment overrides
             { new UIValidator {
-                Action = "register", SetupFakeRenderAction = (validator, remoteAuthenticator) => { remoteAuthenticator.Registering = validator.FakeRender; } }
+                Action = "register", SetupAction = (validator, remoteAuthenticator) => { remoteAuthenticator.Registering = validator.Render; } }
             },
             { new UIValidator {
-                Action = "logout", SetupFakeRenderAction = (validator, remoteAuthenticator) => { remoteAuthenticator.LogOut = validator.FakeRender; } }
+                Action = "logout", SetupAction = (validator, remoteAuthenticator) => { remoteAuthenticator.LogOut = validator.Render; } }
             },
             { new UIValidator {
-                Action = "logout-callback", SetupFakeRenderAction = (validator, remoteAuthenticator) => { remoteAuthenticator.CompletingLogOut = validator.FakeRender; } }
+                Action = "logout-callback", SetupAction = (validator, remoteAuthenticator) => { remoteAuthenticator.CompletingLogOut = validator.Render; } }
             },
             { new UIValidator {
-                Action = "logout-failed", SetupFakeRenderAction = (validator, remoteAuthenticator) => { remoteAuthenticator.LogOutFailed = m => builder => validator.FakeRender(builder); } }
+                Action = "logout-failed", SetupAction = (validator, remoteAuthenticator) => { remoteAuthenticator.LogOutFailed = m => builder => validator.Render(builder); } }
             },
             { new UIValidator {
-                Action = "logged-out", SetupFakeRenderAction = (validator, remoteAuthenticator) => { remoteAuthenticator.LogOutSucceeded = validator.FakeRender; } }
+                Action = "logged-out", SetupAction = (validator, remoteAuthenticator) => { remoteAuthenticator.LogOutSucceeded = validator.Render; } }
             },
         };
 
@@ -531,8 +531,8 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
             // Arrange
             var renderer = new TestRenderer(new ServiceCollection().BuildServiceProvider());
             var authenticator = new TestRemoteAuthenticatorView();
-            renderer.Attach(authenticator); 
-            validator.SetupFakeRender(authenticator);
+            renderer.Attach(authenticator);
+            validator.Setup(authenticator);
 
             var parameters = ParameterView.FromDictionary(new Dictionary<string, object>
             {
@@ -544,91 +544,18 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
             // Assert
             Assert.True(validator.WasCalled);
-        }
-
-        [Theory]
-        [MemberData(nameof(DisplaysRightUIData))]
-        public async Task AuthenticationManager_DoesNotThrowExceptionOnDisplaysUI_WhenPathsAreMissing(UIValidator validator)
-        {
-            // Arrange
-            var renderer = new TestRenderer(new ServiceCollection().BuildServiceProvider());
-            var authenticator = new TestRemoteAuthenticatorView(new RemoteAuthenticationApplicationPathsOptions());
-            renderer.Attach(authenticator);
-            validator.SetupFakeRender(authenticator);
-
-            var parameters = ParameterView.FromDictionary(new Dictionary<string, object>
-            {
-                [_action] = validator.Action
-            });
-
-            // Act
-            Task result = await renderer.Dispatcher.InvokeAsync<Task>(() => authenticator.SetParametersAsync(parameters));
-
-
-            // Assert
-            Assert.Null(result.Exception);
-        }
-
-        public static TheoryData<UIValidator, string> DisplaysRightUIWhenPathsAreMissingData { get; } = new TheoryData<UIValidator, string>
-        {
-            // Profile fragment overrides
-            {
-                new UIValidator {
-                    Action = "profile",
-                    SetupFakeRenderAction = (validator, remoteAuthenticator) => { remoteAuthenticator.UserProfile = validator.FakeRender; },
-                    RetrieveOriginalRenderAction = (validator, remoteAuthenticator) => { validator.OriginalRender =  remoteAuthenticator.UserProfile; } },
-                "ProfileNotSupportedFragment"
-            },
-            {
-                new UIValidator {
-                    Action = "register",
-                    SetupFakeRenderAction = (validator, remoteAuthenticator) => { remoteAuthenticator.Registering = validator.FakeRender; },
-                    RetrieveOriginalRenderAction = (validator, remoteAuthenticator) => { validator.OriginalRender =  remoteAuthenticator.Registering; } },
-                "RegisterNotSupportedFragment"
-            }
-        };
-
-        [Theory]
-        [MemberData(nameof(DisplaysRightUIWhenPathsAreMissingData))]
-        public async Task AuthenticationManager_DisplaysRightUI_WhenPathsAreMissing(UIValidator validator, string methodName)
-        {
-            // Arrange
-            var renderer = new TestRenderer(new ServiceCollection().BuildServiceProvider());
-            var jsRuntime = new TestJsRuntime();
-            var authenticator = new TestRemoteAuthenticatorView(new RemoteAuthenticationApplicationPathsOptions(), jsRuntime);
-            renderer.Attach(authenticator);
-
-            var parameters = ParameterView.FromDictionary(new Dictionary<string, object>
-            {
-                [_action] = validator.Action
-            });
-
-            // Act
-            await renderer.Dispatcher.InvokeAsync<object>(() => authenticator.SetParametersAsync(parameters));
-            validator.RetrieveOriginalRender(authenticator);
-            validator.SetupFakeRender(authenticator);
-            Task result = await renderer.Dispatcher.InvokeAsync<Task>(() => authenticator.SetParametersAsync(parameters));
-
-
-            // Assert
-            Assert.True(validator.WasCalled);
-            Assert.Equal(methodName, validator.OriginalRender.Method.Name);
-            Assert.Equal(default, jsRuntime.LastInvocation);
         }
 
         public class UIValidator
         {
             public string Action { get; set; }
-            public Action<UIValidator, RemoteAuthenticatorViewCore<RemoteAuthenticationState>> SetupFakeRenderAction { get; set; }
-            public Action<UIValidator, RemoteAuthenticatorViewCore<RemoteAuthenticationState>> RetrieveOriginalRenderAction { get; set; }
+            public Action<UIValidator, RemoteAuthenticatorViewCore<RemoteAuthenticationState>> SetupAction { get; set; }
             public bool WasCalled { get; set; }
-            public RenderFragment OriginalRender { get; set; }
-            public RenderFragment FakeRender { get; set; }
+            public RenderFragment Render { get; set; }
 
-            public UIValidator() => FakeRender = builder => WasCalled = true;
+            public UIValidator() => Render = builder => WasCalled = true;
 
-            internal void SetupFakeRender(TestRemoteAuthenticatorView manager) => SetupFakeRenderAction(this, manager);
-            internal void RetrieveOriginalRender(TestRemoteAuthenticatorView manager) => RetrieveOriginalRenderAction(this, manager);
+            internal void Setup(TestRemoteAuthenticatorView manager) => SetupAction(this, manager);
         }
 
         private static
@@ -717,12 +644,6 @@ namespace Microsoft.AspNetCore.Components.WebAssembly.Authentication
                     RemoteProfilePath = "Identity/Account/Manage",
                     RemoteRegisterPath = "Identity/Account/Register",
                 };
-            }
-
-            public TestRemoteAuthenticatorView(RemoteAuthenticationApplicationPathsOptions applicationPaths, IJSRuntime jsRuntime = default)
-            {
-                ApplicationPaths = applicationPaths;
-                JS = jsRuntime;
             }
 
             protected override Task OnParametersSetAsync()

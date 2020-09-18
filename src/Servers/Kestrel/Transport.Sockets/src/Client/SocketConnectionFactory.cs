@@ -16,7 +16,7 @@ using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets
 {
-    internal class SocketConnectionFactory : IConnectionFactory, IAsyncDisposable
+    public class SocketConnectionFactory : IConnectionFactory, IAsyncDisposable
     {
         private readonly SocketTransportOptions _options;
         private readonly MemoryPool<byte> _memoryPool;
@@ -63,8 +63,7 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets
                 _trace,
                 _options.MaxReadBufferSize,
                 _options.MaxWriteBufferSize,
-                _options.WaitForDataBeforeAllocatingBuffer,
-                _options.UnsafePreferInlineScheduling);
+                _options.WaitForDataBeforeAllocatingBuffer);
 
             socketConnection.Start();
             return socketConnection;

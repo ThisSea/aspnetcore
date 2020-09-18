@@ -90,38 +90,6 @@ namespace Microsoft.AspNetCore
         }
 
         [Fact]
-        public void RefAssemblyReferencesHaveExpectedAssemblyVersions()
-        {
-            if (!_isTargetingPackBuilding)
-            {
-                return;
-            }
-
-            IEnumerable<string> dlls = Directory.GetFiles(Path.Combine(_targetingPackRoot, "ref", _targetingPackTfm), "*.dll", SearchOption.AllDirectories);
-            Assert.NotEmpty(dlls);
-
-            Assert.All(dlls, path =>
-            {
-                // Skip netstandard2.0 System.IO.Pipelines assembly. References have old versions.
-                var filename = Path.GetFileName(path);
-                if (!string.Equals("System.IO.Pipelines.dll", filename, StringComparison.OrdinalIgnoreCase))
-                {
-                    using var fileStream = File.OpenRead(path);
-                    using var peReader = new PEReader(fileStream, PEStreamOptions.Default);
-                    var reader = peReader.GetMetadataReader(MetadataReaderOptions.Default);
-
-                    Assert.All(reader.AssemblyReferences, handle =>
-                    {
-                        var reference = reader.GetAssemblyReference(handle);
-                        var result = 0 == reference.Version.Revision;
-
-                        Assert.True(result, $"In {filename}, {reference.GetAssemblyName()} has unexpected version {reference.Version}.");
-                    });
-                }
-            });
-        }
-
-        [Fact]
         public void PackageOverridesContainsCorrectEntries()
         {
             if (!_isTargetingPackBuilding)

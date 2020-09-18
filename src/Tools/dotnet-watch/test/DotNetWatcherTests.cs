@@ -34,8 +34,7 @@ namespace Microsoft.DotNet.Watcher.Tools.FunctionalTests
             Assert.Equal("1", envValue);
         }
 
-        [ConditionalFact]
-        [SkipOnHelix("https://github.com/dotnet/aspnetcore/issues/24841", Queues = "Windows.10.Arm64.Open")]
+        [Fact]
         public async Task RunsWithIterationEnvVariable()
         {
             await _app.StartWatcherAsync();

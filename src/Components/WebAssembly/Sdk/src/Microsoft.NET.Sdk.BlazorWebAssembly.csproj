@@ -12,8 +12,6 @@
     <NoWarn>$(NoWarn);NU5100</NoWarn>
     <!-- Need to build this project in source build -->
     <ExcludeFromSourceBuild>false</ExcludeFromSourceBuild>
-
-    <IsShipping>false</IsShipping>
   </PropertyGroup>
 
   <ItemGroup>

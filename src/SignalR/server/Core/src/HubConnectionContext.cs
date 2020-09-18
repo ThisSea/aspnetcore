@@ -6,7 +6,6 @@ using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipelines;
 using System.Security.Claims;
 using System.Threading;
@@ -74,13 +73,6 @@ namespace Microsoft.AspNetCore.SignalR
 
             _systemClock = contextOptions.SystemClock ?? new SystemClock();
             _lastSendTimeStamp = _systemClock.UtcNowTicks;
-
-            // We'll be avoiding using the semaphore when the limit is set to 1, so no need to allocate it
-            var maxInvokeLimit = contextOptions.MaximumParallelInvocations;
-            if (maxInvokeLimit != 1)
-            {
-                ActiveInvocationLimit = new SemaphoreSlim(maxInvokeLimit, maxInvokeLimit);
-            }
         }
 
         internal StreamTracker StreamTracker
@@ -100,8 +92,6 @@ namespace Microsoft.AspNetCore.SignalR
         internal HubCallerContext HubCallerContext { get; }
 
         internal Exception? CloseException { get; private set; }
-
-        internal SemaphoreSlim? ActiveInvocationLimit { get; }
 
         /// <summary>
         /// Gets a <see cref="CancellationToken"/> that notifies when the connection is aborted.
@@ -147,21 +137,15 @@ namespace Microsoft.AspNetCore.SignalR
         // Currently used only for streaming methods
         internal ConcurrentDictionary<string, CancellationTokenSource> ActiveRequestCancellationSources { get; } = new ConcurrentDictionary<string, CancellationTokenSource>(StringComparer.Ordinal);
 
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public virtual ValueTask WriteAsync(HubMessage message, CancellationToken cancellationToken = default)
-        {
-            return WriteAsync(message, ignoreAbort: false, cancellationToken);
-        }
-
-        internal ValueTask WriteAsync(HubMessage message, bool ignoreAbort, CancellationToken cancellationToken = default)
         {
             // Try to grab the lock synchronously, if we fail, go to the slower path
             if (!_writeLock.Wait(0))
             {
-                return new ValueTask(WriteSlowAsync(message, ignoreAbort, cancellationToken));
+                return new ValueTask(WriteSlowAsync(message, cancellationToken));
             }
 
-            if (_connectionAborted && !ignoreAbort)
+            if (_connectionAborted)
             {
                 _writeLock.Release();
                 return default;
@@ -189,7 +173,6 @@ namespace Microsoft.AspNetCore.SignalR
         /// <param name="message">The serialization cache to use.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests. The default value is <see cref="CancellationToken.None" />.</param>
         /// <returns></returns>
-        [SuppressMessage("ApiDesign", "RS0026:Do not add multiple overloads with optional parameters", Justification = "Required to maintain compatibility")]
         public virtual ValueTask WriteAsync(SerializedHubMessage message, CancellationToken cancellationToken = default)
         {
             // Try to grab the lock synchronously, if we fail, go to the slower path
@@ -280,14 +263,14 @@ namespace Microsoft.AspNetCore.SignalR
             }
         }
 
-        private async Task WriteSlowAsync(HubMessage message, bool ignoreAbort, CancellationToken cancellationToken)
+        private async Task WriteSlowAsync(HubMessage message, CancellationToken cancellationToken)
         {
             // Failed to get the lock immediately when entering WriteAsync so await until it is available
             await _writeLock.WaitAsync(cancellationToken);
 
             try
             {
-                if (_connectionAborted && !ignoreAbort)
+                if (_connectionAborted)
                 {
                     return;
                 }
@@ -309,7 +292,7 @@ namespace Microsoft.AspNetCore.SignalR
         private async Task WriteSlowAsync(SerializedHubMessage message, CancellationToken cancellationToken)
         {
             // Failed to get the lock immediately when entering WriteAsync so await until it is available
-            await _writeLock.WaitAsync(cancellationToken);
+            await _writeLock.WaitAsync();
 
             try
             {

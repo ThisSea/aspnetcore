@@ -18,7 +18,7 @@ using Microsoft.Extensions.Logging;
 namespace Company.WebApplication1.Pages
 {
 #if (GenerateApiOrGraph)
-    [AuthorizeForScopes(ScopeKeySection = "DownstreamApi:Scopes")]
+    [AuthorizeForScopes(ScopeKeySection = "CalledApi:CalledApiScopes")]
 #endif
     public class IndexModel : PageModel
     {
@@ -36,17 +36,7 @@ namespace Company.WebApplication1.Pages
 
         public async Task OnGet()
         {
-            using var response = await _downstreamWebApi.CallWebApiForUserAsync("DownstreamApi").ConfigureAwait(false);
-            if (response.StatusCode == System.Net.HttpStatusCode.OK)
-            {
-                var apiResult = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                ViewData["ApiResult"] = apiResult;
-            }
-            else
-            {
-                var error = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                throw new HttpRequestException($"Invalid status code in the HttpResponseMessage: {response.StatusCode}: {error}");
-            }
+            ViewData["ApiResult"] = await _downstreamWebApi.CallWebApiAsync();
         }
 #elseif (GenerateGraph)
         private readonly GraphServiceClient _graphServiceClient;

@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Runtime.Versioning;
 using System.Security.Principal;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
@@ -16,7 +15,6 @@ namespace Microsoft.AspNetCore.DataProtection.Repositories
     /// <summary>
     /// An XML repository backed by the Windows registry.
     /// </summary>
-    [SupportedOSPlatform("windows")]
     public class RegistryXmlRepository : IXmlRepository
     {
         private static readonly Lazy<RegistryKey> _defaultRegistryKeyLazy = new Lazy<RegistryKey>(GetDefaultHklmStorageKey);

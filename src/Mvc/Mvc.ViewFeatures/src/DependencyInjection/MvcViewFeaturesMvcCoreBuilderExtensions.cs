@@ -177,9 +177,6 @@ namespace Microsoft.Extensions.DependencyInjection
             // Component services for Blazor server-side interop
             services.TryAddSingleton<ServerComponentSerializer>();
 
-            // Component services for Blazor webassembly interop
-            services.TryAddSingleton<WebAssemblyComponentSerializer>();
-
             //
             // View Components
             //

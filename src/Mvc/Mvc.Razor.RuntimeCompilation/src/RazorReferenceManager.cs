@@ -52,7 +52,7 @@ namespace Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation
         // For unit testing
         internal IEnumerable<string> GetReferencePaths()
         {
-            var referencePaths = new List<string>(_options.AdditionalReferencePaths.Count);
+            var referencePaths = new List<string>();
 
             foreach (var part in _partManager.ApplicationParts)
             {

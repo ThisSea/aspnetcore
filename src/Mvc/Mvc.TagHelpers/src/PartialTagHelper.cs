@@ -113,7 +113,7 @@ namespace Microsoft.AspNetCore.Mvc.TagHelpers
 
             if (output == null)
             {
-                throw new ArgumentNullException(nameof(output));
+                throw new ArgumentNullException(nameof(context));
             }
 
             // Reset the TagName. We don't want `partial` to render.

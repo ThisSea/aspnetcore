@@ -19,7 +19,6 @@ namespace Microsoft.AspNetCore.Mvc.Routing
     {
         public DynamicControllerEndpointMatcherPolicyTest()
         {
-            var dataSourceKey = new ControllerEndpointDataSourceIdMetadata(1);
             var actions = new ActionDescriptor[]
             {
                 new ControllerActionDescriptor()
@@ -60,13 +59,12 @@ namespace Microsoft.AspNetCore.Mvc.Routing
                 new EndpointMetadataCollection(new object[]
                 {
                     new DynamicControllerRouteValueTransformerMetadata(typeof(CustomTransformer), State),
-                    dataSourceKey
                 }),
                 "dynamic");
 
             DataSource = new DefaultEndpointDataSource(ControllerEndpoints);
 
-            SelectorCache = new TestDynamicControllerEndpointSelectorCache(DataSource, 1);
+            Selector = new TestDynamicControllerEndpointSelector(DataSource);
 
             var services = new ServiceCollection();
             services.AddRouting();
@@ -90,7 +88,7 @@ namespace Microsoft.AspNetCore.Mvc.Routing
 
         private Endpoint DynamicEndpoint { get; }
 
-        private DynamicControllerEndpointSelectorCache SelectorCache { get; }
+        private DynamicControllerEndpointSelector Selector { get; }
 
         private IServiceProvider Services { get; }
 
@@ -104,7 +102,7 @@ namespace Microsoft.AspNetCore.Mvc.Routing
         public async Task ApplyAsync_NoMatch()
         {
             // Arrange
-            var policy = new DynamicControllerEndpointMatcherPolicy(SelectorCache, Comparer);
+            var policy = new DynamicControllerEndpointMatcherPolicy(Selector, Comparer);
 
             var endpoints = new[] { DynamicEndpoint, };
             var values = new RouteValueDictionary[] { null, };
@@ -134,7 +132,7 @@ namespace Microsoft.AspNetCore.Mvc.Routing
         public async Task ApplyAsync_HasMatchNoEndpointFound()
         {
             // Arrange
-            var policy = new DynamicControllerEndpointMatcherPolicy(SelectorCache, Comparer);
+            var policy = new DynamicControllerEndpointMatcherPolicy(Selector, Comparer);
 
             var endpoints = new[] { DynamicEndpoint, };
             var values = new RouteValueDictionary[] { null, };
@@ -165,7 +163,7 @@ namespace Microsoft.AspNetCore.Mvc.Routing
         public async Task ApplyAsync_HasMatchFindsEndpoint_WithoutRouteValues()
         {
             // Arrange
-            var policy = new DynamicControllerEndpointMatcherPolicy(SelectorCache, Comparer);
+            var policy = new DynamicControllerEndpointMatcherPolicy(Selector, Comparer);
 
             var endpoints = new[] { DynamicEndpoint, };
             var values = new RouteValueDictionary[] { null, };
@@ -211,7 +209,7 @@ namespace Microsoft.AspNetCore.Mvc.Routing
         public async Task ApplyAsync_ThrowsForTransformerWithInvalidLifetime()
         {
             // Arrange
-            var policy = new DynamicControllerEndpointMatcherPolicy(SelectorCache, Comparer);
+            var policy = new DynamicControllerEndpointMatcherPolicy(Selector, Comparer);
 
             var endpoints = new[] { DynamicEndpoint, };
             var values = new RouteValueDictionary[] { new RouteValueDictionary(new { slug = "test", }), };
@@ -242,7 +240,7 @@ namespace Microsoft.AspNetCore.Mvc.Routing
         public async Task ApplyAsync_HasMatchFindsEndpoint_WithRouteValues()
         {
             // Arrange
-            var policy = new DynamicControllerEndpointMatcherPolicy(SelectorCache, Comparer);
+            var policy = new DynamicControllerEndpointMatcherPolicy(Selector, Comparer);
 
             var endpoints = new[] { DynamicEndpoint, };
             var values = new RouteValueDictionary[] { new RouteValueDictionary(new { slug = "test", }), };
@@ -299,7 +297,7 @@ namespace Microsoft.AspNetCore.Mvc.Routing
         public async Task ApplyAsync_CanDiscardFoundEndpoints()
         {
             // Arrange
-            var policy = new DynamicControllerEndpointMatcherPolicy(SelectorCache, Comparer);
+            var policy = new DynamicControllerEndpointMatcherPolicy(Selector, Comparer);
 
             var endpoints = new[] { DynamicEndpoint, };
             var values = new RouteValueDictionary[] { new RouteValueDictionary(new { slug = "test", }), };
@@ -338,7 +336,7 @@ namespace Microsoft.AspNetCore.Mvc.Routing
         public async Task ApplyAsync_CanReplaceFoundEndpoints()
         {
             // Arrange
-            var policy = new DynamicControllerEndpointMatcherPolicy(SelectorCache, Comparer);
+            var policy = new DynamicControllerEndpointMatcherPolicy(Selector, Comparer);
 
             var endpoints = new[] { DynamicEndpoint, };
             var values = new RouteValueDictionary[] { new RouteValueDictionary(new { slug = "test", }), };
@@ -400,7 +398,7 @@ namespace Microsoft.AspNetCore.Mvc.Routing
         public async Task ApplyAsync_CanExpandTheListOfFoundEndpoints()
         {
             // Arrange
-            var policy = new DynamicControllerEndpointMatcherPolicy(SelectorCache, Comparer);
+            var policy = new DynamicControllerEndpointMatcherPolicy(Selector, Comparer);
 
             var endpoints = new[] { DynamicEndpoint, };
             var values = new RouteValueDictionary[] { new RouteValueDictionary(new { slug = "test", }), };
@@ -439,11 +437,11 @@ namespace Microsoft.AspNetCore.Mvc.Routing
             Assert.Same(ControllerEndpoints[2], candidates[1].Endpoint);
         }
 
-        private class TestDynamicControllerEndpointSelectorCache : DynamicControllerEndpointSelectorCache
+        private class TestDynamicControllerEndpointSelector : DynamicControllerEndpointSelector
         {
-            public TestDynamicControllerEndpointSelectorCache(EndpointDataSource dataSource, int key)
+            public TestDynamicControllerEndpointSelector(EndpointDataSource dataSource)
+                : base(dataSource)
             {
-                AddDataSource(dataSource, key);
             }
         }
 

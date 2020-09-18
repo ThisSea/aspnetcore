@@ -10,13 +10,8 @@ namespace System.Net.Quic.Implementations.MsQuic.Internal
         {
             if (!MsQuicStatusHelper.SuccessfulStatusCode(status))
             {
-                throw CreateExceptionForHResult(status, message, innerException);
+                throw new QuicException($"{message} Error Code: {MsQuicStatusCodes.GetError(status)}");
             }
-        }
-
-        internal static Exception CreateExceptionForHResult(uint status, string? message = null, Exception? innerException = null)
-        {
-            return new QuicException($"{message} Error Code: {MsQuicStatusCodes.GetError(status)}", innerException);
         }
     }
 }

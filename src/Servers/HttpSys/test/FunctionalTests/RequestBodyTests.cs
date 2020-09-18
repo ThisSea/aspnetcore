@@ -9,7 +9,6 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Testing;
 using Xunit;
@@ -24,7 +23,6 @@ namespace Microsoft.AspNetCore.Server.HttpSys
             string address;
             using (Utilities.CreateHttpServer(out address, httpContext =>
             {
-                Assert.True(httpContext.Request.CanHaveBody());
                 byte[] input = new byte[100];
                 httpContext.Features.Get<IHttpBodyControlFeature>().AllowSynchronousIO = true;
                 int read = httpContext.Request.Body.Read(input, 0, input.Length);
@@ -44,7 +42,6 @@ namespace Microsoft.AspNetCore.Server.HttpSys
             string address;
             using (Utilities.CreateHttpServer(out address, async httpContext =>
             {
-                Assert.True(httpContext.Request.CanHaveBody());
                 byte[] input = new byte[100];
                 int read = await httpContext.Request.Body.ReadAsync(input, 0, input.Length);
                 httpContext.Response.ContentLength = read;

@@ -145,56 +145,32 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal
                 return;
             }
 
-            var builder = new StringBuilder();
-            builder.Append(method);
-            builder.Append("[");
-            builder.Append(buffer.Length);
-            builder.AppendLine("]");
-
-            var charBuilder = new StringBuilder();
+            var builder = new StringBuilder($"{method}[{buffer.Length}] ");
 
             // Write the hex
             for (int i = 0; i < buffer.Length; i++)
             {
                 builder.Append(buffer[i].ToString("X2"));
                 builder.Append(" ");
-
-                var bufferChar = (char)buffer[i];
-                if (char.IsControl(bufferChar))
-                {
-                    charBuilder.Append(".");
-                }
-                else
-                {
-                    charBuilder.Append(bufferChar);
-                }
-
-                if ((i + 1) % 16 == 0)
-                {
-                    builder.Append("  ");
-                    builder.Append(charBuilder.ToString());
-                    builder.AppendLine();
-                    charBuilder.Clear();
-                }
-                else if ((i + 1) % 8 == 0)
-                {
-                    builder.Append(" ");
-                    charBuilder.Append(" ");
-                }
             }
-            if (charBuilder.Length > 0)
+            builder.AppendLine();
+            builder.Append("{0}");
+
+            var rawDataBuilder = new StringBuilder();
+            // Write the bytes as if they were ASCII
+            for (int i = 0; i < buffer.Length; i++)
             {
-                // 2 (between hex and char blocks) + num bytes left (3 per byte)
-                builder.Append(string.Empty.PadRight(2 + (3 * (16 - charBuilder.Length))));
-                // extra for space after 8th byte
-                if (charBuilder.Length < 8)
+                var bufferChar = (char)buffer[i];
+                if (Char.IsControl(bufferChar))
                 {
-                    builder.Append(" ");
+                    rawDataBuilder.Append("\\x");
+                    rawDataBuilder.Append(buffer[i].ToString("X2"));
+                    continue;
                 }
-                builder.Append(charBuilder.ToString());
+                rawDataBuilder.Append(bufferChar);
             }
 
-            _logger.LogDebug(builder.ToString());
+            _logger.LogDebug(builder.ToString(), rawDataBuilder.ToString());
         }
 
         // The below APM methods call the underlying Read/WriteAsync methods which will still be logged.

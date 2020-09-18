@@ -162,7 +162,7 @@ namespace Microsoft.AspNetCore.Http.Headers
         {
             public static bool TryParse(string value, out TestHeaderValue result)
             {
-                if (string.Equals("valid", value, StringComparison.Ordinal))
+                if (string.Equals("valid", value))
                 {
                     result = new TestHeaderValue();
                     return true;
@@ -176,7 +176,7 @@ namespace Microsoft.AspNetCore.Http.Headers
                 var results = new List<TestHeaderValue>();
                 foreach (var value in values)
                 {
-                    if (string.Equals("valid", value, StringComparison.Ordinal))
+                    if (string.Equals("valid", value))
                     {
                         results.Add(new TestHeaderValue());
                     }

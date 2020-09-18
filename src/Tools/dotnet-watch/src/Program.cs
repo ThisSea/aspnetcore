@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.DotNet.Watcher.Internal;
@@ -39,11 +38,6 @@ namespace Microsoft.DotNet.Watcher
                 DebugHelper.HandleDebugSwitch(ref args);
                 using (var program = new Program(PhysicalConsole.Singleton, Directory.GetCurrentDirectory()))
                 {
-                    //if no command argument provided, we fall back to dotnet watch run
-                    if (args.Length == 0)
-                    {
-                        args = new[] { "run" };
-                    }
                     return await program.RunAsync(args);
                 }
             }

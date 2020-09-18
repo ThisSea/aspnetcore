@@ -10,8 +10,14 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 #if (OrganizationalAuth || IndividualB2CAuth)
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+#endif
+#if (OrganizationalAuth)
 using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.TokenCacheProviders.InMemory;
+#endif
+#if (IndividualB2CAuth)
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.TokenCacheProviders.InMemory;
 #endif
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,10 +26,6 @@ using Microsoft.Extensions.Logging;
 #if (GenerateGraph)
 using Microsoft.Graph;
 #endif
-#if (EnableOpenAPI)
-using Microsoft.OpenApi.Models;
-#endif
-
 namespace Company.WebApplication1
 {
     public class Startup
@@ -39,39 +41,36 @@ namespace Company.WebApplication1
         public void ConfigureServices(IServiceCollection services)
         {
 #if (OrganizationalAuth)
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 #if (GenerateApiOrGraph)
-                .AddMicrosoftIdentityWebApi(Configuration.GetSection("AzureAd"))
-                    .EnableTokenAcquisitionToCallDownstreamApi()
+            // Adds Microsoft Identity platform (AAD v2.0) support to protect this Api
+            services.AddMicrosoftWebApiAuthentication(Configuration, "AzureAd")
+                .AddMicrosoftWebApiCallsWebApi(Configuration, "AzureAd")
+                .AddInMemoryTokenCaches();
+
+#else
+            // Adds Microsoft Identity platform (AAD v2.0) support to protect this Api
+            services.AddMicrosoftWebApiAuthentication(Configuration, "AzureAd");
+#endif
 #if (GenerateApi)
-                        .AddDownstreamWebApi("DownstreamApi", Configuration.GetSection("DownstreamApi"))
+            services.AddDownstreamWebApiService(Configuration);
 #endif
 #if (GenerateGraph)
-                        .AddMicrosoftGraph(Configuration.GetSection("DownstreamApi"))
-#endif
-                        .AddInMemoryTokenCaches();
-#else
-                .AddMicrosoftIdentityWebApi(Configuration.GetSection("AzureAd"));
+            services.AddMicrosoftGraph(Configuration.GetValue<string>("CalledApi:CalledApiScopes")?.Split(' '),
+                                       Configuration.GetValue<string>("CalledApi:CalledApiUrl"));
 #endif
 #elif (IndividualB2CAuth)
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 #if (GenerateApi)
-                .AddMicrosoftIdentityWebApi(Configuration.GetSection("AzureAdB2C"))
-                    .EnableTokenAcquisitionToCallDownstreamApi()
-                        .AddDownstreamWebApi("DownstreamApi", Configuration.GetSection("DownstreamApi"))
-                        .AddInMemoryTokenCaches();
+            services.AddMicrosoftWebApiAuthentication(Configuration, "AzureAdB2C")
+                .AddMicrosoftWebApiCallsWebApi(Configuration, "AzureAdB2C")
+                .AddInMemoryTokenCaches();
+
+            services.AddDownstreamWebApiService(Configuration);
 #else
-                .AddMicrosoftIdentityWebApi(Configuration.GetSection("AzureAdB2C"));
+            services.AddMicrosoftWebApiAuthentication(Configuration, "AzureAdB2C");
 #endif
 #endif
 
             services.AddControllers();
-#if (EnableOpenAPI)
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Company.WebApplication1", Version = "v1" });
-            });
-#endif
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -80,10 +79,6 @@ namespace Company.WebApplication1
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                #if (EnableOpenAPI)
-                app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Company.WebApplication1 v1"));
-                #endif
             }
 #if (RequiresHttps)
 

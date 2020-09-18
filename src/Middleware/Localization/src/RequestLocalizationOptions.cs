@@ -122,7 +122,7 @@ namespace Microsoft.AspNetCore.Builder
         /// <returns>The <see cref="RequestLocalizationOptions"/>.</returns>
         public RequestLocalizationOptions AddSupportedCultures(params string[] cultures)
         {
-            var supportedCultures = new List<CultureInfo>(cultures.Length);
+            var supportedCultures = new List<CultureInfo>();
 
             foreach (var culture in cultures)
             {
@@ -140,7 +140,7 @@ namespace Microsoft.AspNetCore.Builder
         /// <returns>The <see cref="RequestLocalizationOptions"/>.</returns>
         public RequestLocalizationOptions AddSupportedUICultures(params string[] uiCultures)
         {
-            var supportedUICultures = new List<CultureInfo>(uiCultures.Length);
+            var supportedUICultures = new List<CultureInfo>();
             foreach (var culture in uiCultures)
             {
                 supportedUICultures.Add(new CultureInfo(culture));

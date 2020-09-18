@@ -13,8 +13,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Xunit;
 
-#nullable enable
-
 namespace Microsoft.Extensions.Diagnostics.HealthChecks
 {
     public class HealthCheckPublisherHostedServiceTest

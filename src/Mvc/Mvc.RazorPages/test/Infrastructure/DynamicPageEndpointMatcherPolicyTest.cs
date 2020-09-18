@@ -51,13 +51,12 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
                 new EndpointMetadataCollection(new object[]
                 {
                     new DynamicPageRouteValueTransformerMetadata(typeof(CustomTransformer), State),
-                    new PageEndpointDataSourceIdMetadata(1),
                 }),
                 "dynamic");
 
             DataSource = new DefaultEndpointDataSource(PageEndpoints);
 
-            SelectorCache = new TestDynamicPageEndpointSelectorCache(DataSource);
+            Selector = new TestDynamicPageEndpointSelector(DataSource);
 
             var services = new ServiceCollection();
             services.AddRouting();
@@ -107,7 +106,7 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
 
         private PageLoader Loader { get; }
 
-        private DynamicPageEndpointSelectorCache SelectorCache { get; }
+        private DynamicPageEndpointSelector Selector { get; }
 
         private object State { get; }
 
@@ -121,7 +120,7 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
         public async Task ApplyAsync_NoMatch()
         {
             // Arrange
-            var policy = new DynamicPageEndpointMatcherPolicy(SelectorCache, Loader, Comparer);
+            var policy = new DynamicPageEndpointMatcherPolicy(Selector, Loader, Comparer);
 
             var endpoints = new[] { DynamicEndpoint, };
             var values = new RouteValueDictionary[] { null, };
@@ -151,7 +150,7 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
         public async Task ApplyAsync_HasMatchNoEndpointFound()
         {
             // Arrange
-            var policy = new DynamicPageEndpointMatcherPolicy(SelectorCache, Loader, Comparer);
+            var policy = new DynamicPageEndpointMatcherPolicy(Selector, Loader, Comparer);
 
             var endpoints = new[] { DynamicEndpoint, };
             var values = new RouteValueDictionary[] { null, };
@@ -182,7 +181,7 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
         public async Task ApplyAsync_HasMatchFindsEndpoint_WithoutRouteValues()
         {
             // Arrange
-            var policy = new DynamicPageEndpointMatcherPolicy(SelectorCache, Loader, Comparer);
+            var policy = new DynamicPageEndpointMatcherPolicy(Selector, Loader, Comparer);
 
             var endpoints = new[] { DynamicEndpoint, };
             var values = new RouteValueDictionary[] { null, };
@@ -222,7 +221,7 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
         public async Task ApplyAsync_HasMatchFindsEndpoint_WithRouteValues()
         {
             // Arrange
-            var policy = new DynamicPageEndpointMatcherPolicy(SelectorCache, Loader, Comparer);
+            var policy = new DynamicPageEndpointMatcherPolicy(Selector, Loader, Comparer);
 
             var endpoints = new[] { DynamicEndpoint, };
             var values = new RouteValueDictionary[] { new RouteValueDictionary(new { slug = "test", }), };
@@ -273,7 +272,7 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
         public async Task ApplyAsync_Throws_ForTransformersWithInvalidLifetime()
         {
             // Arrange
-            var policy = new DynamicPageEndpointMatcherPolicy(SelectorCache, Loader, Comparer);
+            var policy = new DynamicPageEndpointMatcherPolicy(Selector, Loader, Comparer);
 
             var endpoints = new[] { DynamicEndpoint, };
             var values = new RouteValueDictionary[] { new RouteValueDictionary(new { slug = "test", }), };
@@ -303,7 +302,7 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
         public async Task ApplyAsync_CanDiscardFoundEndpoints()
         {
             // Arrange
-            var policy = new DynamicPageEndpointMatcherPolicy(SelectorCache, Loader, Comparer);
+            var policy = new DynamicPageEndpointMatcherPolicy(Selector, Loader, Comparer);
 
             var endpoints = new[] { DynamicEndpoint, };
             var values = new RouteValueDictionary[] { new RouteValueDictionary(new { slug = "test", }), };
@@ -341,7 +340,7 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
         public async Task ApplyAsync_CanReplaceFoundEndpoints()
         {
             // Arrange
-            var policy = new DynamicPageEndpointMatcherPolicy(SelectorCache, Loader, Comparer);
+            var policy = new DynamicPageEndpointMatcherPolicy(Selector, Loader, Comparer);
 
             var endpoints = new[] { DynamicEndpoint, };
             var values = new RouteValueDictionary[] { new RouteValueDictionary(new { slug = "test", }), };
@@ -401,7 +400,7 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
         public async Task ApplyAsync_CanExpandTheListOfFoundEndpoints()
         {
             // Arrange
-            var policy = new DynamicPageEndpointMatcherPolicy(SelectorCache, Loader, Comparer);
+            var policy = new DynamicPageEndpointMatcherPolicy(Selector, Loader, Comparer);
 
             var endpoints = new[] { DynamicEndpoint, };
             var values = new RouteValueDictionary[] { new RouteValueDictionary(new { slug = "test", }), };
@@ -439,11 +438,11 @@ namespace Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure
             Assert.Same(LoadedEndpoints[1], candidates[1].Endpoint);
         }
 
-        private class TestDynamicPageEndpointSelectorCache : DynamicPageEndpointSelectorCache
+        private class TestDynamicPageEndpointSelector : DynamicPageEndpointSelector
         {
-            public TestDynamicPageEndpointSelectorCache(EndpointDataSource dataSource)
+            public TestDynamicPageEndpointSelector(EndpointDataSource dataSource)
+                : base(dataSource)
             {
-                AddDataSource(dataSource, 1);
             }
         }
 

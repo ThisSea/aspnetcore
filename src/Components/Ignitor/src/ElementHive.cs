@@ -259,7 +259,7 @@ namespace Ignitor
 
                 case RenderTreeFrameType.Region:
                     {
-                        return InsertFrameRange(batch, parent, childIndex, frames, frameIndex + 1, frameIndex + frame.RegionSubtreeLength);
+                        return InsertFrameRange(batch, parent, childIndex, frames, frameIndex + 1, frameIndex + CountDescendantFrames(frame));
                     }
 
                 case RenderTreeFrameType.ElementReferenceCapture:
@@ -322,8 +322,7 @@ namespace Ignitor
         {
             // Note: we don't handle SVG here
             var newElement = new ElementNode(frame.ElementName);
-
-            var inserted = false;
+            parent.InsertLogicalChild(newElement, childIndex);
 
             // Apply attributes
             for (var i = frameIndex + 1; i < frameIndex + frame.ElementSubtreeLength; i++)
@@ -335,20 +334,11 @@ namespace Ignitor
                 }
                 else
                 {
-                    parent.InsertLogicalChild(newElement, childIndex);
-                    inserted = true;
-
                     // As soon as we see a non-attribute child, all the subsequent child frames are
                     // not attributes, so bail out and insert the remnants recursively
                     InsertFrameRange(batch, newElement, 0, frames, i, frameIndex + frame.ElementSubtreeLength);
                     break;
                 }
-            }
-
-            // this element did not have any children, so it's not inserted yet.
-            if (!inserted)
-            {
-                parent.InsertLogicalChild(newElement, childIndex);
             }
         }
 

@@ -24,8 +24,7 @@ namespace Microsoft.AspNetCore.Server.IIS.FunctionalTests
     [Collection(PublishedSitesCollection.Name)]
     public class ResetTests : IISFunctionalTestBase
     {
-        // TODO: This is just a guess, there is no build available yet with this feature.
-        private const string WindowsVersionForTrailers = "10.0.20300";
+        private const string WindowsVersionForTrailers = "10.0.20180";
 
         public ResetTests(PublishedSitesFixture fixture) : base(fixture)
         {
@@ -46,7 +45,7 @@ namespace Microsoft.AspNetCore.Server.IIS.FunctionalTests
         };
 
         public static readonly IEnumerable<KeyValuePair<string, string>> PostRequestHeaders = new[]
-        {
+{
             new KeyValuePair<string, string>(HeaderNames.Method, "POST"),
             new KeyValuePair<string, string>(HeaderNames.Scheme, "https"),
             new KeyValuePair<string, string>(HeaderNames.Authority, "localhost:80"),
@@ -355,79 +354,6 @@ namespace Microsoft.AspNetCore.Server.IIS.FunctionalTests
                 .Build().RunAsync();
         }
 
-        [ConditionalFact]
-        [MinimumOSVersion(OperatingSystems.Windows, WindowsVersionForTrailers, SkipReason = "Reset support was added in Win10_20H2.")]
-        public async Task Reset_AfterCompleteAsync_NoReset()
-        {
-            var deploymentParameters = GetHttpsDeploymentParameters();
-            var deploymentResult = await DeployAsync(deploymentParameters);
-
-            await new HostBuilder()
-                .UseHttp2Cat(deploymentResult.ApplicationBaseUri, async h2Connection =>
-                {
-                    await h2Connection.InitializeConnectionAsync();
-
-                    h2Connection.Logger.LogInformation("Initialized http2 connection. Starting stream 1.");
-
-                    await h2Connection.StartStreamAsync(1, GetHeaders("/Reset_AfterCompleteAsync_NoReset"), endStream: true);
-
-                    await h2Connection.ReceiveHeadersAsync(1, decodedHeaders =>
-                    {
-                        Assert.Equal("200", decodedHeaders[HeaderNames.Status]);
-                    });
-
-                    var dataFrame = await h2Connection.ReceiveFrameAsync();
-                    Http2Utilities.VerifyDataFrame(dataFrame, 1, endOfStream: false, length: 11);
-
-                    dataFrame = await h2Connection.ReceiveFrameAsync();
-                    Http2Utilities.VerifyDataFrame(dataFrame, 1, endOfStream: true, length: 0);
-
-                    h2Connection.Logger.LogInformation("Connection stopped.");
-                })
-                .Build().RunAsync();
-        }
-
-        [ConditionalFact]
-        [MinimumOSVersion(OperatingSystems.Windows, WindowsVersionForTrailers, SkipReason = "Reset support was added in Win10_20H2.")]
-        public async Task Reset_CompleteAsyncDuringRequestBody_Resets()
-        {
-            var deploymentParameters = GetHttpsDeploymentParameters();
-            var deploymentResult = await DeployAsync(deploymentParameters);
-
-            await new HostBuilder()
-                .UseHttp2Cat(deploymentResult.ApplicationBaseUri, async h2Connection =>
-                {
-                    await h2Connection.InitializeConnectionAsync();
-
-                    h2Connection.Logger.LogInformation("Initialized http2 connection. Starting stream 1.");
-
-                    await h2Connection.StartStreamAsync(1, Http2Utilities.PostRequestHeaders, endStream: false);
-                    await h2Connection.SendDataAsync(1, new byte[10], endStream: false);
-
-                    await h2Connection.ReceiveHeadersAsync(1, decodedHeaders =>
-                    {
-                        Assert.Equal("200", decodedHeaders[HeaderNames.Status]);
-                    });
-
-                    var dataFrame = await h2Connection.ReceiveFrameAsync();
-                    if (Environment.OSVersion.Version >= Win10_Regressed_DataFrame)
-                    {
-                        // TODO: Remove when the regression is fixed.
-                        // https://github.com/dotnet/aspnetcore/issues/23164#issuecomment-652646163
-                        Http2Utilities.VerifyDataFrame(dataFrame, 1, endOfStream: false, length: 0);
-
-                        dataFrame = await h2Connection.ReceiveFrameAsync();
-                    }
-                    Http2Utilities.VerifyDataFrame(dataFrame, 1, endOfStream: true, length: 0);
-
-                    var resetFrame = await h2Connection.ReceiveFrameAsync();
-                    Http2Utilities.VerifyResetFrame(resetFrame, expectedStreamId: 1, expectedErrorCode: Http2ErrorCode.NO_ERROR);
-
-                    h2Connection.Logger.LogInformation("Connection stopped.");
-                })
-                .Build().RunAsync();
-        }
-
         private static List<KeyValuePair<string, string>> GetHeaders(string path)
         {
             var headers = Headers.ToList();
@@ -445,6 +371,7 @@ namespace Microsoft.AspNetCore.Server.IIS.FunctionalTests
             headers.Add(kvp);
             return headers;
         }
+
 
         private IISDeploymentParameters GetHttpsDeploymentParameters()
         {

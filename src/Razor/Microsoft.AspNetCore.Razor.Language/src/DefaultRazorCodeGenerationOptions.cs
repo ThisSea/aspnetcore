@@ -1,4 +1,4 @@
-// Copyright (c) .NET Foundation. All rights reserved.
+﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 namespace Microsoft.AspNetCore.Razor.Language
@@ -13,8 +13,7 @@ namespace Microsoft.AspNetCore.Razor.Language
             bool suppressChecksum,
             bool suppressMetadataAttributes,
             bool suppressPrimaryMethodBody,
-            bool suppressNullabilityEnforcement,
-            bool omitMinimizedComponentAttributeValues)
+            bool suppressNullabilityEnforcement)
         {
             IndentWithTabs = indentWithTabs;
             IndentSize = indentSize;
@@ -24,7 +23,6 @@ namespace Microsoft.AspNetCore.Razor.Language
             SuppressMetadataAttributes = suppressMetadataAttributes;
             SuppressPrimaryMethodBody = suppressPrimaryMethodBody;
             SuppressNullabilityEnforcement = suppressNullabilityEnforcement;
-            OmitMinimizedComponentAttributeValues = omitMinimizedComponentAttributeValues;
         }
 
         public override bool DesignTime { get; }
@@ -38,7 +36,5 @@ namespace Microsoft.AspNetCore.Razor.Language
         public override bool SuppressChecksum { get; }
 
         public override bool SuppressNullabilityEnforcement { get; }
-
-        public override bool OmitMinimizedComponentAttributeValues { get; }
     }
 }

@@ -1349,11 +1349,7 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
             };
 
             var protocol = HubProtocols[protocolName];
-            await using (var server = await StartServer<Startup>(write =>
-            {
-                return write.EventId.Name == "FailedWritingMessage" || write.EventId.Name == "ReceivedCloseWithError"
-                    || write.EventId.Name == "ShutdownWithError";
-            }))
+            await using (var server = await StartServer<Startup>(write => write.EventId.Name == "FailedWritingMessage"))
             {
                 var connection = CreateHubConnection(server.Url, "/default", HttpTransportType.WebSockets, protocol, LoggerFactory);
                 var closedTcs = new TaskCompletionSource<Exception>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -1365,12 +1361,9 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
                     var result = connection.InvokeAsync<string>(nameof(TestHub.CallWithUnserializableObject));
 
                     // The connection should close.
-                    var exception = await closedTcs.Task.OrTimeout();
-                    Assert.Contains("Connection closed with an error.", exception.Message);
+                    Assert.Null(await closedTcs.Task.OrTimeout());
 
-                    var hubException = await Assert.ThrowsAsync<HubException>(() => result).OrTimeout();
-                    Assert.Contains("Connection closed with an error.", hubException.Message);
-                    Assert.Contains(exceptionSubstring, hubException.Message);
+                    await Assert.ThrowsAsync<TaskCanceledException>(() => result).OrTimeout();
                 }
                 catch (Exception ex)
                 {
@@ -1403,11 +1396,7 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
             };
 
             var protocol = HubProtocols[protocolName];
-            await using (var server = await StartServer<Startup>(write =>
-            {
-                return write.EventId.Name == "FailedWritingMessage" || write.EventId.Name == "ReceivedCloseWithError"
-                    || write.EventId.Name == "ShutdownWithError";
-            }))
+            await using (var server = await StartServer<Startup>(write => write.EventId.Name == "FailedWritingMessage"))
             {
                 var connection = CreateHubConnection(server.Url, "/default", HttpTransportType.LongPolling, protocol, LoggerFactory);
                 var closedTcs = new TaskCompletionSource<Exception>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -1419,12 +1408,9 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
                     var result = connection.InvokeAsync<string>(nameof(TestHub.GetUnserializableObject)).OrTimeout();
 
                     // The connection should close.
-                    var exception = await closedTcs.Task.OrTimeout();
-                    Assert.Contains("Connection closed with an error.", exception.Message);
+                    Assert.Null(await closedTcs.Task.OrTimeout());
 
-                    var hubException = await Assert.ThrowsAsync<HubException>(() => result).OrTimeout();
-                    Assert.Contains("Connection closed with an error.", hubException.Message);
-                    Assert.Contains(exceptionSubstring, hubException.Message);
+                    await Assert.ThrowsAsync<TaskCanceledException>(() => result).OrTimeout();
                 }
                 catch (Exception ex)
                 {
@@ -1722,34 +1708,6 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
                     await hubConnection.StartAsync().OrTimeout();
                     var cookieValue = await hubConnection.InvokeAsync<string>(nameof(TestHub.GetCookieValue), "Foo").OrTimeout();
                     Assert.Equal("Bar", cookieValue);
-                }
-                catch (Exception ex)
-                {
-                    LoggerFactory.CreateLogger<HubConnectionTests>().LogError(ex, "{ExceptionType} from test", ex.GetType().FullName);
-                    throw;
-                }
-                finally
-                {
-                    await hubConnection.DisposeAsync().OrTimeout();
-                }
-            }
-        }
-
-        [ConditionalFact]
-        [WebSocketsSupportedCondition]
-        public async Task CookiesFromNegotiateAreAppliedToWebSockets()
-        {
-            await using (var server = await StartServer<Startup>())
-            {
-                var hubConnection = new HubConnectionBuilder()
-                    .WithLoggerFactory(LoggerFactory)
-                    .WithUrl(server.Url + "/default", HttpTransportType.WebSockets)
-                    .Build();
-                try
-                {
-                    await hubConnection.StartAsync().OrTimeout();
-                    var cookieValue = await hubConnection.InvokeAsync<string>(nameof(TestHub.GetCookieValue), "fromNegotiate").OrTimeout();
-                    Assert.Equal("a value", cookieValue);
                 }
                 catch (Exception ex)
                 {

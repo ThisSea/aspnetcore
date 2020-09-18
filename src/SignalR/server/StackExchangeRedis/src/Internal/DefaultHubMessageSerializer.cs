@@ -10,12 +10,11 @@ namespace Microsoft.AspNetCore.SignalR.Internal
 {
     internal class DefaultHubMessageSerializer
     {
-        private readonly List<IHubProtocol> _hubProtocols;
+        private readonly List<IHubProtocol> _hubProtocols = new List<IHubProtocol>();
 
         public DefaultHubMessageSerializer(IHubProtocolResolver hubProtocolResolver, IList<string> globalSupportedProtocols, IList<string> hubSupportedProtocols)
         {
             var supportedProtocols = hubSupportedProtocols ?? globalSupportedProtocols ?? Array.Empty<string>();
-            _hubProtocols = new List<IHubProtocol>(supportedProtocols.Count);
             foreach (var protocolName in supportedProtocols)
             {
                 var protocol = hubProtocolResolver.GetProtocol(protocolName, (supportedProtocols as IReadOnlyList<string>) ?? supportedProtocols.ToList());

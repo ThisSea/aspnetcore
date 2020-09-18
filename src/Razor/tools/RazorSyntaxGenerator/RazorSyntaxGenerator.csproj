@@ -7,7 +7,6 @@
     <PackageId>RazorSyntaxGenerator</PackageId>
     <OutputType>Exe</OutputType>
     <EnableApiCheck>false</EnableApiCheck>
-    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
 </Project>
